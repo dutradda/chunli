@@ -1,0 +1,37 @@
+site_name: chunli
+site_description: LuizaLabs Stress Test Tool
+
+theme:
+    name: 'material'
+    palette:
+      primary: 'green'
+      accent: 'grey'
+    logo: 'python-white.svg'
+    favicon: 'favicon.png'
+
+repo_name: luizalabs/chunli
+repo_url: https://github.com/luizalabs/chunli
+edit_uri: ''
+google_analytics:
+    - ''
+    - 'auto'
+
+nav:
+    - chunli: 'index.md'
+    - Features: 'features.md'
+    - Some Explanation: 'explain-concept.md'
+    - Tutorial - User Guide:
+        - Introduciton: 'tutorial/intro.md'
+    - Benchmarks: 'benchmarks.md'
+    - Help chunli - Get Help: 'help.md'
+    - Development - Contributing: 'contributing.md'
+    - Changelog: changelog.md
+
+markdown_extensions:
+  - markdown.extensions.codehilite:
+      guess_lang: false
+  - markdown_include.include:
+      base_path: docs
+  - admonition
+  - codehilite
+  - extra
