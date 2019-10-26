@@ -1,5 +1,5 @@
 site_name: chunli
-site_description: LuizaLabs Stress Test Tool
+site_description: Distributed load test application
 
 theme:
     name: 'material'
@@ -9,8 +9,8 @@ theme:
     logo: 'python-white.svg'
     favicon: 'favicon.png'
 
-repo_name: luizalabs/chunli
-repo_url: https://github.com/luizalabs/chunli
+repo_name: dutradda/chunli
+repo_url: https://github.com/dutradda/chunli
 edit_uri: ''
 google_analytics:
     - ''

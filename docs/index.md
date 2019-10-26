@@ -2,7 +2,7 @@
 
 <p align="center" style="margin: 3em">
   <a href="">
-    <img src="python.svg" alt="chunli" width="300"/>
+    <img src="chunli.gif" alt="chunli" width="300"/>
   </a>
 </p>
 
