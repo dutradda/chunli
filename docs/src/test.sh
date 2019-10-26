@@ -8,6 +8,7 @@ source ${VIRTUAL_ENV}/bin/activate
 test_path=$(dirname ${BASH_SOURCE[0]})
 test_regex="s%${test_path}/[^/]+/(.*)\.test.bash%\1%g"
 test_files="$(find ${test_path}/**/*.test.bash)"
+md5_cmd=$(which md5sum >/dev/null 2>&1 && echo md5sum || echo 'md5 -r')
 
 
 for filepath in ${test_files}; do
@@ -52,7 +53,7 @@ for filepath in ${test_files}; do
     )
     sed ${output_tmpfile} -i -r -e \
         "s/${task_id}/4ee301eb-6487-48a0-b6ed-e5f576accfc2/g" 2>/dev/null
-    md5sum ${output_file} ${output_tmpfile} > ${checksum_file}
+    $md5_cmd ${output_file} ${output_tmpfile} > ${checksum_file}
 
     cp ${curl_file2} ${tmp_curl_file2}
     sed ${tmp_curl_file2} -i -r -e \
@@ -61,9 +62,12 @@ for filepath in ${test_files}; do
         sed -r -e "s/${date_regex}/${date_sub}/g" \
             -e "s/${task_time_regex}/${task_time_sub}/g" \
             -e '$ s/(.*)/\1\n/g' > ${output_tmpfile2}
-    sed ${output_tmpfile2} -i -r -e \
-        "s/${task_id}/4ee301eb-6487-48a0-b6ed-e5f576accfc2/g" 2>/dev/null
-    md5sum ${output_file2} ${output_tmpfile2} > ${checksum_file2}
+    sed ${output_tmpfile2} -i -r \
+        -e "s/${task_id}/4ee301eb-6487-48a0-b6ed-e5f576accfc2/g" \
+        -e "s/content-length: 4[0-9]{2}/content-length: 409/g" \
+        -e 's/[0-9]+\.[0-9]+/1.0/g' 2>/dev/null
+
+    $md5_cmd ${output_file2} ${output_tmpfile2} > ${checksum_file2}
 
     ps ax | (ps ax | awk "/uvicorn index_hello_app:app/ {print \$1}" | xargs kill -SIGTERM 2>/dev/null)
     ps ax | (ps ax | awk "/uvicorn chunli:app/ {print \$1}" | xargs kill -SIGTERM 2>/dev/null)

@@ -2,6 +2,7 @@ include devtools/python/Bakefile devtools/common/Bakefile
 
 export PYTHONPATH=.
 export PROJECT_NAME=chunli
+export DEBUG=1
 
 deploy: //check-virtualenv @confirm:secure deploy-docs release-pypi
 
@@ -11,5 +12,8 @@ setup-chunli: //check-virtualenv
     pip install -e git+https://github.com/psf/black@d9e71a75ccfefa3d9156a64c03313a0d4ad981e5#egg=black
     pip install 'https://github.com/PyCQA/pyflakes/archive/ee1eb0670a473a30f32208b7bd811282834486a6.tar.gz'
     pip install 'https://github.com/PyCQA/flake8/archive/0359533fca164ef21c40c8074fbd3899316b8f91.tar.gz'
+    pip install -e git+https://github.com/numpy/numpy-stubs@be9a47933de1b89e482b05b16c0a493da2dcb14a#egg=numpy-stubs
 
 integration: check-code tests-docs coverage
+
+dependencies: setup-chunli //dependencies

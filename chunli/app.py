@@ -1,5 +1,4 @@
-import asyncio
-from typing import List, TypedDict
+import logging
 
 from apidaora import GZipFactory, appdaora, route
 from apidaora.asgi.base import ASGIApp
@@ -8,11 +7,13 @@ from jsondaora import jsondaora
 from . import caller, config
 
 
-@jsondaora
-class Results(TypedDict):
-    duration: int
-    rps_per_node: int
-    calls: List[str]
+if config.debug:
+    logging.basicConfig(level=logging.DEBUG)
+else:
+    logging.basicConfig(level=logging.INFO)
+
+
+logger = logging.getLogger(__name__)
 
 
 @jsondaora
@@ -21,22 +22,17 @@ class GzipBody(GZipFactory):
 
 
 def make_app() -> ASGIApp:
-    # loop = asyncio.get_event_loop()
-    # chunli = loop.create_task(
-    #     caller.make_caller(config)
-    # )
-
     @route.background('/run', tasks_repository=config.redis_target)
-    async def run(duration: int, rps_per_node: int, body: GzipBody) -> Results:
-        calls = []
-        # caller.run_calls(chunli)
+    async def run(
+        duration: int, rps_per_node: int, body: GzipBody
+    ) -> caller.Results:
+        calls = (line.strip('\n') for line in body.open())
+        chunli = await caller.make_caller(config)
 
-        for line in body.open():
-            calls.append(line.strip('\n'))
+        await chunli.set_calls(calls)
+        await chunli.run_calls(duration, rps_per_node)
 
-        return Results(
-            duration=duration, rps_per_node=rps_per_node, calls=calls
-        )
+        return await chunli.get_results(duration)
 
     return appdaora(run)
 
