@@ -4,7 +4,7 @@ from confdaora import confdaora_env
 from dictdaora import DictDaora
 
 
-__version__ = '0.0.1'
+__version__ = '0.1.0'
 
 
 class AppConfig(DictDaora):
