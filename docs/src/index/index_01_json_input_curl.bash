@@ -1,3 +1,3 @@
 curl -X POST \
-    -i localhost:8000/start?duration=2s&rps_per_node=100 \
-    --upload-file=/tmp/hello-call.gz
+    -i 'localhost:8000/run?duration=1&rps_per_node=10' \
+    --upload-file /tmp/hello-call.gz

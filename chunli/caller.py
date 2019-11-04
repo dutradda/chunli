@@ -45,7 +45,7 @@ class Results(TypedDict):
 @jsondaora
 class Call(TypedDict):
     url: str
-    method: str
+    method: Optional[str]
     headers: Optional[Dict[str, str]]
 
 
@@ -63,9 +63,12 @@ class Caller(DictDaora):
 
         for call in calls:
             try:
-                call_ = typed_dict_asjson(
-                    as_typed_dict(orjson.loads(call), Call), Call
-                )
+                call_ = orjson.loads(call)
+
+                if 'method' not in call_:
+                    call_['method'] = MethodType.GET.value
+
+                call_ = typed_dict_asjson(as_typed_dict(call_, Call), Call)
                 await self.data_source.rpush(self._calls_key, call_)
 
             except Exception:
@@ -130,8 +133,10 @@ class Caller(DictDaora):
 
                 try:
                     start_time = time.time()
-                    response = await http_data_source.get(
-                        input_['url'], headers=input_['headers']
+                    response = await http_data_source.request(
+                        url=input_['url'],
+                        headers=input_['headers'],
+                        method=input_['method'],
                     )
                     await response.read()
                     end_time = time.time()
