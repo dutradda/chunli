@@ -2,7 +2,7 @@
 
 <p align="center" style="margin: 3em">
   <a href="https://github.com/dutradda/chunli">
-    <img src="chunli.gif" alt="chunli" width="300"/>
+    <img src="https://dutradda.github.io/chunli/chunli.gif" alt="chunli" width="300"/>
   </a>
 </p>
 
