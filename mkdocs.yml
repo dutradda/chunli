@@ -4,7 +4,7 @@ site_description: LuizaLabs Stress Test Tool
 theme:
     name: 'material'
     palette:
-      primary: 'green'
+      primary: 'light-blue'
       accent: 'grey'
     logo: 'python-white.svg'
     favicon: 'favicon.png'
@@ -18,12 +18,12 @@ google_analytics:
 
 nav:
     - chunli: 'index.md'
-    - Features: 'features.md'
-    - Some Explanation: 'explain-concept.md'
-    - Tutorial - User Guide:
-        - Introduciton: 'tutorial/intro.md'
-    - Benchmarks: 'benchmarks.md'
-    - Help chunli - Get Help: 'help.md'
+    # - Features: 'features.md'
+    # - Some Explanation: 'explain-concept.md'
+    # - Tutorial - User Guide:
+    #     - Introduciton: 'tutorial/intro.md'
+    # - Benchmarks: 'benchmarks.md'
+    # - Help chunli - Get Help: 'help.md'
     - Development - Contributing: 'contributing.md'
     - Changelog: changelog.md
 
