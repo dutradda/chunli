@@ -1,7 +1,15 @@
 import asyncio
 import logging
 import time
-from typing import Dict, Iterable, List, Optional, TypedDict
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    TypedDict,
+)
 
 import aioredis  # type: ignore
 import httpx
@@ -34,12 +42,13 @@ class Error(TypedDict):
 
 @jsondaora
 class Results(TypedDict):
-    duration: float
-    requested_rps_per_node: float
-    realized_requests: float
-    realized_rps: float
-    latency: Latency
+    duration: Optional[float]
+    requested_rps_per_node: Optional[float]
+    realized_requests: Optional[float]
+    realized_rps: Optional[float]
+    latency: Optional[Latency]
     error: Optional[Error]
+    nodes_quantity: Optional[int]
 
 
 @jsondaora
@@ -49,17 +58,26 @@ class Call(TypedDict):
     headers: Optional[Dict[str, str]]
 
 
+class CallerConfig(TypedDict):
+    duration: int
+    rps_per_node: int
+
+
 class Caller(DictDaora):
-    data_source: aioredis.Redis
     data_source_target: str
+    if TYPE_CHECKING:
+        distributed_task: asyncio.Task[None]
+    else:
+        distributed_task: asyncio.Task
+    running = True
     _running_key = 'chunli:running'
     _results_key = 'chunli:results'
+    _distributed_calls_key = 'chunli:distributed'
     _calls_key = 'chunli:calls'
 
     async def set_calls(self, calls: Iterable[str]) -> None:
-        await self.data_source.delete(self._running_key)
-        await self.data_source.delete(self._calls_key)
-        await self.data_source.delete(self._results_key)
+        data_source = await self.get_data_source()
+        await data_source.delete(self._calls_key)
 
         for call in calls:
             try:
@@ -69,7 +87,7 @@ class Caller(DictDaora):
                     call_['method'] = MethodType.GET.value
 
                 call_ = typed_dict_asjson(as_typed_dict(call_, Call), Call)
-                await self.data_source.rpush(self._calls_key, call_)
+                await data_source.rpush(self._calls_key, call_)
 
             except Exception:
                 if call.startswith('http'):
@@ -82,7 +100,7 @@ class Caller(DictDaora):
                             ),
                             Call,
                         )
-                        await self.data_source.rpush(self._calls_key, call_)
+                        await data_source.rpush(self._calls_key, call_)
 
                     except Exception as error:
                         logger.exception(error)
@@ -91,9 +109,42 @@ class Caller(DictDaora):
                 else:
                     logger.warning(f'Invalid line {call}')
 
-    async def run_calls(self, duration: int, rps_per_node: int) -> None:
-        logger.info('Starting calls')
+        data_source.close()
+
+    async def get_data_source(self) -> aioredis.Redis:
+        return await aioredis.create_redis_pool(self.data_source_target)
+
+    async def run_distributed_calls(self) -> None:
+        data_source = await self.get_data_source()
+        channels = await data_source.psubscribe(self._distributed_calls_key)
+        await channels[0].wait_message()
+        configuration: CallerConfig = (await channels[0].get_json())[1]
+        try:
+            await self._run_calls(
+                configuration['duration'], configuration['rps_per_node']
+            )
+        except Exception as error:
+            logger.exception(error)
+
+        data_source.close()
+        await self.run_distributed_calls()
+
+    async def start_distributed_calls(
+        self, configuration: CallerConfig
+    ) -> None:
+        data_source = await self.get_data_source()
+        await data_source.delete(self._running_key)
+        await data_source.delete(self._results_key)
+        await data_source.publish_json(
+            self._distributed_calls_key, configuration
+        )
+        data_source.close()
+
+    async def _run_calls(self, duration: int, rps_per_node: int) -> None:
+        running_id = id(self)
+        logger.info(f'Starting calls for {running_id}')
         wait_running = True
+        data_source = await self.get_data_source()
 
         async with httpx.AsyncClient() as http_data_source:
             latencies = []
@@ -102,7 +153,7 @@ class Caller(DictDaora):
             calls_start_time = time.time()
             inputs: List[bytes] = []
 
-            await self.data_source.sadd(self._running_key, id(self))
+            await data_source.sadd(self._running_key, running_id)
 
             async def wait() -> bool:
                 now = time.time()
@@ -111,17 +162,19 @@ class Caller(DictDaora):
                     wait_running = False  # noqa
                     return True
 
-                await asyncio.sleep(0.001)
+                await asyncio.sleep(float(duration) / float(rps_per_node))
                 return False
 
             while wait_running:
-                input_ = await self.data_source.lpop(self._calls_key)
+                input_ = await data_source.lpop(self._calls_key)
 
                 if input_ is None:
                     if not inputs:
+                        if await wait():
+                            break
                         continue
 
-                    await self.data_source.rpush(self._calls_key, *inputs)
+                    await data_source.rpush(self._calls_key, *inputs)
                     inputs = []
                     continue
 
@@ -159,8 +212,6 @@ class Caller(DictDaora):
                 if await wait():
                     break
 
-        await self.data_source.srem(self._running_key, id(self))
-
         realized_requests = len(responses)
         results = Results(  # type: ignore
             duration=duration,
@@ -178,29 +229,31 @@ class Caller(DictDaora):
         if error is not None:
             results['error'] = error
 
-        try:
-            await self.data_source.sadd(
-                self._results_key, typed_dict_asjson(results, Results)
-            )
-        except Exception as error:
-            logger.exception(error)
-
+        await data_source.hset(
+            self._results_key, running_id, typed_dict_asjson(results, Results)
+        )
+        await data_source.srem(self._running_key, running_id)
+        data_source.close()
         logger.info('Finishing calls')
         logger.debug(results)
 
-    async def get_results(self, timeout: int = 10) -> Results:
+    async def get_results(self, duration: int, timeout: int = 0) -> Results:
         start_wait = time.time()
+        data_source = await self.get_data_source()
 
         while (
-            await self.data_source.scard(self._running_key)
-            and start_wait + timeout > time.time()
+            await data_source.scard(self._running_key)
+            or not await data_source.hlen(self._results_key)
+            or start_wait + duration + timeout > time.time()
         ):
-            await asyncio.sleep(0.001)
+            await asyncio.sleep(1)
 
-        if await self.data_source.scard(self._running_key):
-            raise ResultsTimeoutError(timeout)
+        if await data_source.scard(
+            self._running_key
+        ) or not await data_source.hlen(self._results_key):
+            raise ResultsTimeoutError(duration + timeout)
 
-        all_results = await self.data_source.smembers(self._results_key)
+        all_results = await data_source.hgetall(self._results_key)
         all_durations = []
         all_requested_rps_per_node = []
         all_realized_requests = []
@@ -210,7 +263,7 @@ class Caller(DictDaora):
         all_p99s = []
         all_p95s = []
 
-        for result in all_results:
+        for result in all_results.values():
             result = orjson.loads(result)
             all_durations.append(result['duration'])
             all_requested_rps_per_node.append(result['requested_rps_per_node'])
@@ -221,11 +274,13 @@ class Caller(DictDaora):
             all_p99s.append(result['latency']['percentile99'])
             all_p95s.append(result['latency']['percentile95'])
 
+        duration_ = float(np.mean(all_durations))
+        realized_requests = float(np.sum(all_realized_requests))
         results: Results = Results(
-            duration=float(np.mean(all_durations)),
+            duration=duration_,
             requested_rps_per_node=float(np.mean(all_requested_rps_per_node)),
-            realized_requests=float(np.mean(all_realized_requests)),
-            realized_rps=float(np.mean(all_realized_rps)),
+            realized_requests=realized_requests,
+            realized_rps=realized_requests / duration,
             latency=Latency(
                 mean=float(np.mean(all_means)),
                 median=float(np.mean(all_medians)),
@@ -233,12 +288,21 @@ class Caller(DictDaora):
                 percentile95=float(np.mean(all_p95s)),
             ),
             error=None,
+            nodes_quantity=len(all_results),
         )
+        data_source.close()
         return results
 
 
-async def make_caller(config: AppConfig) -> Caller:
-    data_source = await aioredis.create_redis_pool(config.redis_target)
-    return Caller(
-        data_source=data_source, data_source_target=config.redis_target
+def wait_for_ditributed_calls_in_background(config: AppConfig) -> Any:
+    loop = asyncio.get_running_loop()
+    return loop.create_task(
+        _wait_for_ditributed_calls_in_background(loop, config)
     )
+
+
+async def _wait_for_ditributed_calls_in_background(
+    loop: asyncio.AbstractEventLoop, config: AppConfig
+) -> Any:
+    chunli = Caller(data_source_target=config.redis_target)
+    return loop.create_task(chunli.run_distributed_calls())

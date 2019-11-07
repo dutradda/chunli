@@ -2,7 +2,6 @@ include devtools/python/Bakefile devtools/common/Bakefile
 
 export PYTHONPATH=.
 export PROJECT_NAME=chunli
-export DEBUG=1
 
 deploy: //check-virtualenv @confirm:secure deploy-docs release-pypi
 

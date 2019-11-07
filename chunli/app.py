@@ -4,7 +4,14 @@ from apidaora import GZipFactory, appdaora, route
 from apidaora.asgi.base import ASGIApp
 from jsondaora import jsondaora
 
-from . import caller, config
+from . import config
+from .caller import (
+    Caller,
+    CallerConfig,
+    Error,
+    Results,
+    wait_for_ditributed_calls_in_background,
+)
 
 
 if config.debug:
@@ -22,17 +29,26 @@ class GzipBody(GZipFactory):
 
 
 def make_app() -> ASGIApp:
+    chunli_caller_coro = wait_for_ditributed_calls_in_background(config)
+
     @route.background('/run', tasks_repository=config.redis_target)
-    async def run(
-        duration: int, rps_per_node: int, body: GzipBody
-    ) -> caller.Results:
+    async def run(duration: int, rps_per_node: int, body: GzipBody) -> Results:
+        await chunli_caller_coro
         calls = (line.strip('\n') for line in body.open())
-        chunli = await caller.make_caller(config)
+        chunli_run = Caller(data_source_target=config.redis_target)
 
-        await chunli.set_calls(calls)
-        await chunli.run_calls(duration, rps_per_node)
+        await chunli_run.set_calls(calls)
+        await chunli_run.start_distributed_calls(
+            CallerConfig(duration=duration, rps_per_node=rps_per_node)
+        )
 
-        return await chunli.get_results(duration)
+        try:
+            return await chunli_run.get_results(duration)
+        except Exception as error:
+            logger.exception(error)
+            return Results(  # type: ignore
+                error=Error(name=type(error).__name__, args=error.args)
+            )
 
     return appdaora(run)
 
