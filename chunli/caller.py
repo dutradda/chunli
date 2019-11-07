@@ -1,15 +1,7 @@
 import asyncio
 import logging
 import time
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Dict,
-    Iterable,
-    List,
-    Optional,
-    TypedDict,
-)
+from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, TypedDict
 
 import aioredis  # type: ignore
 import httpx
@@ -66,10 +58,6 @@ class CallerConfig(TypedDict):
 
 class Caller(DictDaora):
     data_source_target: str
-    if TYPE_CHECKING:
-        distributed_task: asyncio.Task[None]
-    else:
-        distributed_task: asyncio.Task
     running = True
     _running_key = 'chunli:running'
     _results_key = 'chunli:results'
@@ -302,15 +290,22 @@ class Caller(DictDaora):
         return results
 
 
-# def wait_for_ditributed_calls_in_background(config: AppConfig) -> Any:
-#     loop = asyncio.get_running_loop()
-#     return loop.create_task(
-#         _wait_for_ditributed_calls_in_background(loop, config)
-#     )
+if TYPE_CHECKING:
+    Task = asyncio.Task[None]
+else:
+    Task = asyncio.Task
 
 
-def wait_for_ditributed_calls_in_background(
-    loop: asyncio.AbstractEventLoop, config: AppConfig
-) -> Any:
+def wait_for_ditributed_calls_in_background(config: AppConfig) -> Task:
+    loop = asyncio.get_running_loop()
+    return loop.create_task(_wait_for_ditributed_calls_in_background(config))
+
+
+async def _wait_for_ditributed_calls_in_background(config: AppConfig) -> None:
     chunli = Caller(data_source_target=config.redis_target)
-    return loop.create_task(chunli.run_distributed_calls())
+
+    try:
+        await chunli.run_distributed_calls()
+    except Exception as error:
+        logger.exception(type(error).__name__)
+        await _wait_for_ditributed_calls_in_background(config)
