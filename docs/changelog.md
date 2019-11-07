@@ -1,6 +1,6 @@
 ## CHANGELOG
 
-### UNRELEASED
+### 0.2.0 - 2019-11-07
 
  - Add support for distribution calls
 
