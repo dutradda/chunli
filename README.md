@@ -62,7 +62,7 @@ Start chunli's job (needs curl [installed](https://curl.haxx.se/docs/install.htm
 
 ```bash
 curl -X POST \
-    -i 'localhost:8000/run?duration=1&rps_per_node=10' \
+    -i 'localhost:8000/run?duration=3&rps_per_node=1' \
     --upload-file /tmp/hello-call.gz
 
 ```
@@ -83,7 +83,7 @@ content-length: 110
 Gets chunli's job results:
 
 ```bash
-sleep 2 && \
+sleep 5 && \
     curl -i 'localhost:8000/run?task_id=4ee301eb-6487-48a0-b6ed-e5f576accfc2'
 
 ```
@@ -95,7 +95,7 @@ server: uvicorn
 content-type: application/json
 content-length: 409
 
-{"end_time":"1970-01-01T00:00:00+00:00","result":{"duration":1.0,"requested_rps_per_node":1.0,"realized_requests":1.0,"realized_rps":1.0,"latency":{"mean":1.0,"median":1.0,"percentile99":1.0,"percentile95":1.0},"error":null,"nodes_quantity":1},"task_id":"4ee301eb-6487-48a0-b6ed-e5f576accfc2","start_time":"1970-01-01T00:00:00+00:00","status":"finished"}
+{"end_time":"1970-01-01T00:00:00+00:00","result":{"duration":1.0,"requested_rps_per_node":1.0,"realized_requests":1.0,"realized_rps":1.0,"latency":{"mean":1.0,"median":1.0,"percentile99":1.0,"percentile95":1.0},"error":null,"nodes_quantity":1,"errors_count":0},"task_id":"4ee301eb-6487-48a0-b6ed-e5f576accfc2","start_time":"1970-01-01T00:00:00+00:00","status":"finished"}
 
 ```
 
@@ -157,6 +157,6 @@ server: uvicorn
 content-type: application/json
 content-length: 409
 
-{"end_time":"1970-01-01T00:00:00+00:00","result":{"duration":1.0,"requested_rps_per_node":1.0,"realized_requests":1.0,"realized_rps":1.0,"latency":{"mean":1.0,"median":1.0,"percentile99":1.0,"percentile95":1.0},"error":null,"nodes_quantity":1},"task_id":"4ee301eb-6487-48a0-b6ed-e5f576accfc2","start_time":"1970-01-01T00:00:00+00:00","status":"finished"}
+{"end_time":"1970-01-01T00:00:00+00:00","result":{"duration":1.0,"requested_rps_per_node":1.0,"realized_requests":1.0,"realized_rps":1.0,"latency":{"mean":1.0,"median":1.0,"percentile99":1.0,"percentile95":1.0},"error":null,"nodes_quantity":1,"errors_count":0},"task_id":"4ee301eb-6487-48a0-b6ed-e5f576accfc2","start_time":"1970-01-01T00:00:00+00:00","status":"finished"}
 
 ```

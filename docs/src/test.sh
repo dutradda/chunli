@@ -38,7 +38,7 @@ for filepath in ${test_files}; do
     coverage run -p $(which uvicorn) chunli:app >${uvicorn_output_file} 2>&1 &
     coverage run -p $(which uvicorn) --port 8001 index_hello_app:app \
         >${uvicorn_hello_output_file} 2>&1 &
-    sleep 1
+    sleep 5
 
     bash ${test_dir}/${filename}.test.bash >/dev/null 2>&1
 

@@ -49,6 +49,7 @@ class Results(TypedDict):
     latency: Optional[Latency]
     error: Optional[Error]
     nodes_quantity: Optional[int]
+    errors_count: Optional[int]
 
 
 @jsondaora
@@ -145,6 +146,7 @@ class Caller(DictDaora):
         logger.info(f'Starting calls for {running_id}')
         wait_running = True
         data_source = await self.get_data_source()
+        errors_count = 0
 
         async with httpx.AsyncClient() as http_data_source:
             latencies = []
@@ -166,51 +168,55 @@ class Caller(DictDaora):
                 return False
 
             while wait_running:
-                input_ = await data_source.lpop(self._calls_key)
+                try:
+                    input_ = await data_source.lpop(self._calls_key)
 
-                if input_ is None:
-                    if not inputs:
-                        if await wait():
-                            break
+                    if input_ is None:
+                        if not inputs:
+                            if await wait():
+                                break
+                            continue
+
+                        await data_source.rpush(self._calls_key, *inputs)
+                        inputs = []
                         continue
 
-                    await data_source.rpush(self._calls_key, *inputs)
-                    inputs = []
-                    continue
+                    else:
+                        inputs.append(input_)
 
-                else:
-                    inputs.append(input_)
+                    input_ = orjson.loads(input_)
+                    logger.debug(f'Getting output for: {input_}')
 
-                input_ = orjson.loads(input_)
-                logger.debug(f'Getting output for: {input_}')
+                    try:
+                        start_time = time.time()
+                        response = await http_data_source.request(
+                            url=input_['url'],
+                            headers=input_['headers'],
+                            method=input_['method'],
+                        )
+                        await response.read()
+                        end_time = time.time()
 
-                try:
-                    start_time = time.time()
-                    response = await http_data_source.request(
-                        url=input_['url'],
-                        headers=input_['headers'],
-                        method=input_['method'],
-                    )
-                    await response.read()
-                    end_time = time.time()
+                        latency = end_time - start_time
+                        latencies.append(latency)
+                        logger.debug(f'Output got: latency={latency}')
 
-                    latency = end_time - start_time
-                    latencies.append(latency)
-                    logger.debug(f'Output got: latency={latency}')
+                        responses.append(response)
+                        logger.debug(
+                            f'Response status code: {response.status_code}'
+                        )
 
-                    responses.append(response)
-                    logger.debug(
-                        f'Response status code: {response.status_code}'
-                    )
+                    except Exception as error_:
+                        wait_running = False
+                        error = error_
+                        logger.exception(error)
+                        break
 
+                    if await wait():
+                        break
                 except Exception as error_:
-                    wait_running = False
-                    error = error_
-                    logger.exception(error)
-                    break
-
-                if await wait():
-                    break
+                    logger.exception(type(error_).__name__)
+                    errors_count += 1
 
         realized_requests = len(responses)
         results = Results(  # type: ignore
@@ -224,6 +230,7 @@ class Caller(DictDaora):
                 percentile99=float(np.percentile(latencies, 99)),
                 percentile95=float(np.percentile(latencies, 95)),
             ),
+            errors_count=errors_count,
         )
 
         if error is not None:
@@ -289,6 +296,7 @@ class Caller(DictDaora):
             ),
             error=None,
             nodes_quantity=len(all_results),
+            errors_count=0,
         )
         data_source.close()
         return results

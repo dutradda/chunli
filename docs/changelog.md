@@ -1,5 +1,9 @@
 ## CHANGELOG
 
+### UNRELEASED
+
+ - Skip errors and count them
+
 ### 0.3.0 - 2019-11-07
 
  - Add support for multiple workers
