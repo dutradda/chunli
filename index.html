@@ -457,7 +457,7 @@ zcat /tmp/hello-call.gz
 
 <p>Start chunli's job (needs curl <a href="https://curl.haxx.se/docs/install.html">installed</a>):</p>
 <div class="codehilite"><pre><span></span>curl -X POST <span class="se">\</span>
-    -i <span class="s1">&#39;localhost:8000/run?duration=1&amp;rps_per_node=10&#39;</span> <span class="se">\</span>
+    -i <span class="s1">&#39;localhost:8000/run?duration=3&amp;rps_per_node=1&#39;</span> <span class="se">\</span>
     --upload-file /tmp/hello-call.gz
 </pre></div>
 
@@ -475,7 +475,7 @@ content-length: 110
 
 
 <p>Gets chunli's job results:</p>
-<div class="codehilite"><pre><span></span>sleep <span class="m">2</span> <span class="o">&amp;&amp;</span> <span class="se">\</span>
+<div class="codehilite"><pre><span></span>sleep <span class="m">5</span> <span class="o">&amp;&amp;</span> <span class="se">\</span>
     curl -i <span class="s1">&#39;localhost:8000/run?task_id=4ee301eb-6487-48a0-b6ed-e5f576accfc2&#39;</span>
 </pre></div>
 
@@ -486,7 +486,7 @@ server: uvicorn
 content-type: application/json
 content-length: 409
 
-{&quot;end_time&quot;:&quot;1970-01-01T00:00:00+00:00&quot;,&quot;result&quot;:{&quot;duration&quot;:1.0,&quot;requested_rps_per_node&quot;:1.0,&quot;realized_requests&quot;:1.0,&quot;realized_rps&quot;:1.0,&quot;latency&quot;:{&quot;mean&quot;:1.0,&quot;median&quot;:1.0,&quot;percentile99&quot;:1.0,&quot;percentile95&quot;:1.0},&quot;error&quot;:null,&quot;nodes_quantity&quot;:1},&quot;task_id&quot;:&quot;4ee301eb-6487-48a0-b6ed-e5f576accfc2&quot;,&quot;start_time&quot;:&quot;1970-01-01T00:00:00+00:00&quot;,&quot;status&quot;:&quot;finished&quot;}
+{&quot;end_time&quot;:&quot;1970-01-01T00:00:00+00:00&quot;,&quot;result&quot;:{&quot;duration&quot;:1.0,&quot;requested_rps_per_node&quot;:1.0,&quot;realized_requests&quot;:1.0,&quot;realized_rps&quot;:1.0,&quot;latency&quot;:{&quot;mean&quot;:1.0,&quot;median&quot;:1.0,&quot;percentile99&quot;:1.0,&quot;percentile95&quot;:1.0},&quot;error&quot;:null,&quot;nodes_quantity&quot;:1,&quot;errors_count&quot;:0},&quot;task_id&quot;:&quot;4ee301eb-6487-48a0-b6ed-e5f576accfc2&quot;,&quot;start_time&quot;:&quot;1970-01-01T00:00:00+00:00&quot;,&quot;status&quot;:&quot;finished&quot;}
 </pre></div>
 
 
@@ -536,7 +536,7 @@ server: uvicorn
 content-type: application/json
 content-length: 409
 
-{&quot;end_time&quot;:&quot;1970-01-01T00:00:00+00:00&quot;,&quot;result&quot;:{&quot;duration&quot;:1.0,&quot;requested_rps_per_node&quot;:1.0,&quot;realized_requests&quot;:1.0,&quot;realized_rps&quot;:1.0,&quot;latency&quot;:{&quot;mean&quot;:1.0,&quot;median&quot;:1.0,&quot;percentile99&quot;:1.0,&quot;percentile95&quot;:1.0},&quot;error&quot;:null,&quot;nodes_quantity&quot;:1},&quot;task_id&quot;:&quot;4ee301eb-6487-48a0-b6ed-e5f576accfc2&quot;,&quot;start_time&quot;:&quot;1970-01-01T00:00:00+00:00&quot;,&quot;status&quot;:&quot;finished&quot;}
+{&quot;end_time&quot;:&quot;1970-01-01T00:00:00+00:00&quot;,&quot;result&quot;:{&quot;duration&quot;:1.0,&quot;requested_rps_per_node&quot;:1.0,&quot;realized_requests&quot;:1.0,&quot;realized_rps&quot;:1.0,&quot;latency&quot;:{&quot;mean&quot;:1.0,&quot;median&quot;:1.0,&quot;percentile99&quot;:1.0,&quot;percentile95&quot;:1.0},&quot;error&quot;:null,&quot;nodes_quantity&quot;:1,&quot;errors_count&quot;:0},&quot;task_id&quot;:&quot;4ee301eb-6487-48a0-b6ed-e5f576accfc2&quot;,&quot;start_time&quot;:&quot;1970-01-01T00:00:00+00:00&quot;,&quot;status&quot;:&quot;finished&quot;}
 </pre></div>
                 
                   
