@@ -294,14 +294,14 @@ class Caller(DictDaora):
         return results
 
 
-def wait_for_ditributed_calls_in_background(config: AppConfig) -> Any:
-    loop = asyncio.get_running_loop()
-    return loop.create_task(
-        _wait_for_ditributed_calls_in_background(loop, config)
-    )
+# def wait_for_ditributed_calls_in_background(config: AppConfig) -> Any:
+#     loop = asyncio.get_running_loop()
+#     return loop.create_task(
+#         _wait_for_ditributed_calls_in_background(loop, config)
+#     )
 
 
-async def _wait_for_ditributed_calls_in_background(
+def wait_for_ditributed_calls_in_background(
     loop: asyncio.AbstractEventLoop, config: AppConfig
 ) -> Any:
     chunli = Caller(data_source_target=config.redis_target)

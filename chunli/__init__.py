@@ -9,7 +9,8 @@ __version__ = '0.2.1'
 
 class AppConfig(DictDaora):
     redis_target: str = 'redis://'
-    debug: bool = False
+    workers: int = 1
+    debug: int = 0
 
 
 config: AppConfig = confdaora_env(AppConfig)

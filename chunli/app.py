@@ -1,3 +1,4 @@
+import asyncio
 import logging
 
 from apidaora import GZipFactory, appdaora, route
@@ -29,11 +30,14 @@ class GzipBody(GZipFactory):
 
 
 def make_app() -> ASGIApp:
-    chunli_caller_coro = wait_for_ditributed_calls_in_background(config)
+    loop = asyncio.get_running_loop()
+    coros = []
+
+    for _ in range(config.workers):
+        coros.append(wait_for_ditributed_calls_in_background(loop, config))
 
     @route.background('/run', tasks_repository=config.redis_target)
     async def run(duration: int, rps_per_node: int, body: GzipBody) -> Results:
-        await chunli_caller_coro
         calls = (line.strip('\n') for line in body.open())
         chunli_run = Caller(data_source_target=config.redis_target)
 
