@@ -8,7 +8,7 @@ author = 'Recommedations Squad'
 author-email = 'bob@luizalabs.com'
 home-page = 'https://github.com/luizalabs/chunli'
 classifiers = []  # see https://pypi.org/classifiers/
-requires = ['apidaora', 'confdaora', 'aioredis', 'httpx']
+requires = ['apidaora', 'confdaora', 'aioredis', 'httpx', 'numpy']
 description-file = 'README.md'
 requires-python = '>=3.8'
 
