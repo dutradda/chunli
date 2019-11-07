@@ -1,6 +1,6 @@
 ## CHANGELOG
 
-### UNRELEASED
+### 0.4.0 - 2019-11-07
 
  - Skip errors and count them
 
