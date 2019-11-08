@@ -1,5 +1,7 @@
 import logging
+import random
 from concurrent.futures import ThreadPoolExecutor
+from typing import TypedDict
 
 from apidaora import GZipFactory, appdaora, route
 from apidaora.asgi.base import ASGIApp
@@ -22,11 +24,6 @@ else:
 
 
 logger = logging.getLogger(__name__)
-
-
-@jsondaora
-class GzipBody(GZipFactory):
-    mode = 'rt'
 
 
 def make_app() -> ASGIApp:
@@ -55,7 +52,31 @@ def make_app() -> ASGIApp:
                 error=Error(name=type(error).__name__, args=error.args)
             )
 
-    return appdaora(run)
+    @route.get('/status')
+    async def status() -> Status:
+        return Status(chunli=random.choice(_CHUN_LI_ATTACKS))
+
+    return appdaora([run, status])
+
+
+@jsondaora
+class GzipBody(GZipFactory):
+    mode = 'rt'
+
+
+@jsondaora
+class Status(TypedDict):
+    chunli: str
+
+
+# ref: https://liberproeliis.fandom.com/pt-br/wiki/Chun-Li
+_CHUN_LI_ATTACKS = [
+    'Hyakuretsukyaku',
+    'Senretsukyaku',
+    'Oyokukyaku',
+    'Houyoku Sen',
+    'Hosenka',
+]
 
 
 app = make_app()

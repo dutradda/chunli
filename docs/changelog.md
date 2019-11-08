@@ -2,6 +2,8 @@
 
 ### UNRELEASED
 
+ - Add status endpoint
+
  - Fix caller inputs management
 
 ### 0.4.2 - 2019-11-08
