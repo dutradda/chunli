@@ -155,7 +155,6 @@ class Caller(DictDaora):
             responses = []
             error: Optional[Exception] = None
             calls_start_time = time.time()
-            inputs: List[bytes] = []
 
             data_source.sadd(self._running_key, running_id)
 
@@ -174,17 +173,12 @@ class Caller(DictDaora):
                     input_ = data_source.lpop(self._calls_key)
 
                     if input_ is None:
-                        if not inputs:
-                            if wait():
-                                break
-                            continue
-
-                        data_source.rpush(self._calls_key, *inputs)
-                        inputs = []
+                        if wait():
+                            break
                         continue
 
                     else:
-                        inputs.append(input_)
+                        data_source.rpush(self._calls_key, input_)
 
                     input_ = orjson.loads(input_)
                     logger.debug(f'Getting output for: {input_}')
