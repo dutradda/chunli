@@ -1,4 +1,5 @@
 import logging
+from concurrent.futures import ThreadPoolExecutor
 
 from apidaora import GZipFactory, appdaora, route
 from apidaora.asgi.base import ASGIApp
@@ -29,9 +30,9 @@ class GzipBody(GZipFactory):
 
 
 def make_app() -> ASGIApp:
-    coros = []
-    for _ in range(config.workers):
-        coros.append(wait_for_ditributed_calls_in_background(config))
+    executor = ThreadPoolExecutor(config.workers)
+    chunli = Caller(data_source_target=config.redis_target)
+    executor.submit(wait_for_ditributed_calls_in_background, chunli, config)
 
     @route.background('/run', tasks_repository=config.redis_target)
     async def run(duration: int, rps_per_node: int, body: GzipBody) -> Results:

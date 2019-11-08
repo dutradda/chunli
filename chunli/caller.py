@@ -1,12 +1,13 @@
 import asyncio
 import logging
 import time
-from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, TypedDict
+from typing import Dict, Iterable, List, Optional, TypedDict
 
 import aioredis  # type: ignore
-import httpx
 import numpy as np
 import orjson
+import redis
+import requests
 from apidaora import MethodType
 from dictdaora import DictDaora
 from jsondaora import as_typed_dict, jsondaora, typed_dict_asjson
@@ -103,69 +104,82 @@ class Caller(DictDaora):
     async def get_data_source(self) -> aioredis.Redis:
         return await aioredis.create_redis_pool(self.data_source_target)
 
-    async def run_distributed_calls(self) -> None:
-        data_source = await self.get_data_source()
-        channels = await data_source.psubscribe(self._distributed_calls_key)
-        await channels[0].wait_message()
-        configuration: CallerConfig = (await channels[0].get_json())[1]
+    def get_sync_data_source(self) -> aioredis.Redis:
+        return redis.Redis.from_url(self.data_source_target)
+
+    def run_distributed_calls(self) -> None:
+        data_source = self.get_sync_data_source()
+        pubsub = data_source.pubsub()
+        pubsub.subscribe(self._distributed_calls_key)
+        message = pubsub.get_message()
+
+        while not message or message['data'] == 1:
+            time.sleep(1)
+            message = pubsub.get_message()
+            continue
+
+        if message['data'] == b'stop':
+            raise SystemExit(0)
+
+        configuration: CallerConfig = orjson.loads(message['data'])
+
         try:
-            await self._run_calls(
+            self._run_calls(
                 configuration['duration'], configuration['rps_per_node']
             )
         except Exception as error:
             logger.exception(error)
 
         data_source.close()
-        await self.run_distributed_calls()
 
     async def start_distributed_calls(
         self, configuration: CallerConfig
     ) -> None:
-        data_source = await self.get_data_source()
-        await data_source.delete(self._running_key)
-        await data_source.delete(self._results_key)
-        await data_source.publish_json(
-            self._distributed_calls_key, configuration
+        data_source = self.get_sync_data_source()
+        data_source.delete(self._running_key)
+        data_source.delete(self._results_key)
+        data_source.publish(
+            self._distributed_calls_key, orjson.dumps(configuration)
         )
         data_source.close()
 
-    async def _run_calls(self, duration: int, rps_per_node: int) -> None:
+    def _run_calls(self, duration: int, rps_per_node: int) -> None:
         running_id = id(self)
         logger.info(f'Starting calls for {running_id}')
         wait_running = True
-        data_source = await self.get_data_source()
+        data_source = self.get_sync_data_source()
         errors_count = 0
 
-        async with httpx.AsyncClient() as http_data_source:
+        with requests.Session() as http_data_source:
             latencies = []
             responses = []
             error: Optional[Exception] = None
             calls_start_time = time.time()
             inputs: List[bytes] = []
 
-            await data_source.sadd(self._running_key, running_id)
+            data_source.sadd(self._running_key, running_id)
 
-            async def wait() -> bool:
+            def wait() -> bool:
                 now = time.time()
 
                 if now - calls_start_time >= duration:
                     wait_running = False  # noqa
                     return True
 
-                await asyncio.sleep(float(duration) / float(rps_per_node))
+                time.sleep(float(duration) / float(rps_per_node))
                 return False
 
             while wait_running:
                 try:
-                    input_ = await data_source.lpop(self._calls_key)
+                    input_ = data_source.lpop(self._calls_key)
 
                     if input_ is None:
                         if not inputs:
-                            if await wait():
+                            if wait():
                                 break
                             continue
 
-                        await data_source.rpush(self._calls_key, *inputs)
+                        data_source.rpush(self._calls_key, *inputs)
                         inputs = []
                         continue
 
@@ -177,12 +191,11 @@ class Caller(DictDaora):
 
                     try:
                         start_time = time.time()
-                        response = await http_data_source.request(
+                        response = http_data_source.request(
                             url=input_['url'],
                             headers=input_['headers'],
                             method=input_['method'],
                         )
-                        await response.read()
                         end_time = time.time()
 
                         latency = end_time - start_time
@@ -200,7 +213,7 @@ class Caller(DictDaora):
                         logger.exception(error)
                         break
 
-                    if await wait():
+                    if wait():
                         break
                 except Exception as error_:
                     logger.exception(type(error_).__name__)
@@ -224,10 +237,10 @@ class Caller(DictDaora):
         if error is not None:
             results['error'] = error
 
-        await data_source.hset(
+        data_source.hset(
             self._results_key, running_id, typed_dict_asjson(results, Results)
         )
-        await data_source.srem(self._running_key, running_id)
+        data_source.srem(self._running_key, running_id)
         data_source.close()
         logger.info('Finishing calls')
         logger.debug(results)
@@ -289,23 +302,12 @@ class Caller(DictDaora):
         data_source.close()
         return results
 
-
-if TYPE_CHECKING:
-    Task = asyncio.Task[None]
-else:
-    Task = asyncio.Task
+    def stop(self) -> None:
+        self.running = False
 
 
-def wait_for_ditributed_calls_in_background(config: AppConfig) -> Task:
-    loop = asyncio.get_running_loop()
-    return loop.create_task(_wait_for_ditributed_calls_in_background(config))
-
-
-async def _wait_for_ditributed_calls_in_background(config: AppConfig) -> None:
-    chunli = Caller(data_source_target=config.redis_target)
-
-    try:
-        await chunli.run_distributed_calls()
-    except Exception as error:
-        logger.exception(type(error).__name__)
-        await _wait_for_ditributed_calls_in_background(config)
+def wait_for_ditributed_calls_in_background(
+    chunli: 'Caller', config: AppConfig
+) -> None:
+    while True:
+        chunli.run_distributed_calls()

@@ -1,5 +1,9 @@
 ## CHANGELOG
 
+### UNRELEASED
+
+ - Fix background caller, but needs gunicorn
+
 ### 0.4.1 - 2019-11-07
 
  - Skip errors on background caller
