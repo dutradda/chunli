@@ -1,6 +1,6 @@
 ## CHANGELOG
 
-### UNRELEASED
+### 0.4.2 - 2019-11-08
 
  - Fix background caller, but needs gunicorn
 
