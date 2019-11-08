@@ -229,7 +229,7 @@ class Caller(DictDaora):
         )
 
         if error is not None:
-            results['error'] = error
+            results['error'] = str(error)
 
         data_source.hset(
             self._results_key, running_id, typed_dict_asjson(results, Results)
