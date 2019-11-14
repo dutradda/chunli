@@ -1,7 +1,10 @@
 import asyncio
 import logging
 import time
-from typing import Dict, Iterable, List, Optional, TypedDict
+import uuid
+from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor
+from typing import Any, DefaultDict, Dict, Iterable, List, Optional, TypedDict
 
 import aioredis  # type: ignore
 import numpy as np
@@ -144,19 +147,40 @@ class Caller(DictDaora):
         data_source.close()
 
     def _run_calls(self, duration: int, rps_per_node: int) -> None:
-        running_id = id(self)
-        logger.info(f'Starting calls for {running_id}')
-        wait_running = True
-        data_source = self.get_sync_data_source()
-        errors_count = 0
-
         with requests.Session() as http_data_source:
+            running_id = str(uuid.uuid4())
+            logger.info(f'Starting calls for {running_id}')
+            wait_running = True
+            data_source = self.get_sync_data_source()
+            responses_status_map: DefaultDict[int, int] = defaultdict(int)
             latencies = []
-            responses = []
-            error: Optional[Exception] = None
+            executor = ThreadPoolExecutor(max_workers=100)
             calls_start_time = time.time()
+            futures = []
 
             data_source.sadd(self._running_key, running_id)
+
+            def run_call(input_: Dict[str, Any]) -> None:
+                start_time = time.time()
+                try:
+                    response = http_data_source.request(
+                        url=input_['url'],
+                        headers=input_['headers'],
+                        method=input_['method'],
+                    )
+                except Exception as error:
+                    response = error  # type: ignore
+                    logger.exception(type(error).__name__)
+                    responses_status_map[-1] += 1
+                else:
+                    logger.debug(
+                        f'Response status code: {response.status_code}'
+                    )
+                    responses_status_map[response.status_code] += 1
+
+                latency = time.time() - start_time
+                latencies.append(latency)
+                logger.debug(f'Output got: latency={latency}')
 
             def wait() -> bool:
                 now = time.time()
@@ -183,61 +207,47 @@ class Caller(DictDaora):
                     input_ = orjson.loads(input_)
                     logger.debug(f'Getting output for: {input_}')
 
-                    try:
-                        start_time = time.time()
-                        response = http_data_source.request(
-                            url=input_['url'],
-                            headers=input_['headers'],
-                            method=input_['method'],
-                        )
-                        end_time = time.time()
-
-                        latency = end_time - start_time
-                        latencies.append(latency)
-                        logger.debug(f'Output got: latency={latency}')
-
-                        responses.append(response)
-                        logger.debug(
-                            f'Response status code: {response.status_code}'
-                        )
-
-                    except Exception as error_:
-                        wait_running = False
-                        error = error_
-                        logger.exception(error)
-                        break
+                    futures.append(executor.submit(run_call, input_))
 
                     if wait():
                         break
+
                 except Exception as error_:
                     logger.exception(type(error_).__name__)
-                    errors_count += 1
 
-        realized_requests = len(responses)
-        results = Results(  # type: ignore
-            duration=duration,
-            requested_rps_per_node=rps_per_node,
-            realized_requests=realized_requests,
-            realized_rps=realized_requests / duration,
-            latency=Latency(
-                mean=float(np.mean(latencies)),
-                median=float(np.median(latencies)),
-                percentile99=float(np.percentile(latencies, 99)),
-                percentile95=float(np.percentile(latencies, 95)),
-            ),
-            errors_count=errors_count,
-        )
+            for future in futures:
+                future.result()
+            executor.shutdown()
 
-        if error is not None:
-            results['error'] = str(error)
+            realized_requests = sum(responses_status_map.values())
+            results = Results(  # type: ignore
+                duration=duration,
+                requested_rps_per_node=rps_per_node,
+                realized_requests=realized_requests,
+                realized_rps=realized_requests / duration,
+                latency=Latency(
+                    mean=float(np.mean(latencies)),
+                    median=float(np.median(latencies)),
+                    percentile99=float(np.percentile(latencies, 99)),
+                    percentile95=float(np.percentile(latencies, 95)),
+                ),
+                errors_count=sum((
+                    responses_status_map[500],
+                    responses_status_map[-1],
+                    responses_status_map[502],
+                    responses_status_map[503],
+                )),
+            )
 
-        data_source.hset(
-            self._results_key, running_id, typed_dict_asjson(results, Results)
-        )
-        data_source.srem(self._running_key, running_id)
-        data_source.close()
-        logger.info('Finishing calls')
-        logger.debug(results)
+            data_source.hset(
+                self._results_key,
+                running_id,
+                typed_dict_asjson(results, Results),
+            )
+            data_source.srem(self._running_key, running_id)
+            data_source.close()
+            logger.info('Finishing calls')
+            logger.debug(results)
 
     async def get_results(self, duration: int, timeout: int = 0) -> Results:
         start_wait = time.time()
