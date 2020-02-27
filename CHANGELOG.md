@@ -1,5 +1,9 @@
 ## CHANGELOG
 
+### UNRELEASED
+
+ - Fix rps_per_node calculation
+
 ### 0.5.0 - 2019-11-08
 
  - Add status endpoint

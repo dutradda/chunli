@@ -4,7 +4,17 @@ import time
 import uuid
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
-from typing import Any, DefaultDict, Dict, Iterable, List, Optional, TypedDict
+from typing import (
+    Any,
+    Callable,
+    DefaultDict,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Tuple,
+    TypedDict,
+)
 
 import aioredis  # type: ignore
 import numpy as np
@@ -86,7 +96,7 @@ class Caller(DictDaora):
                 if call.startswith('http'):
                     try:
                         call_ = typed_dict_asjson(
-                            Call(  # type: ignore
+                            Call(
                                 url=call,
                                 method=MethodType.GET.value,
                                 headers={},
@@ -150,55 +160,26 @@ class Caller(DictDaora):
         with requests.Session() as http_data_source:
             running_id = str(uuid.uuid4())
             logger.info(f'Starting calls for {running_id}')
-            wait_running = True
             data_source = self.get_sync_data_source()
             responses_status_map: DefaultDict[int, int] = defaultdict(int)
-            latencies = []
+            latencies: List[float] = []
             executor = ThreadPoolExecutor(max_workers=100)
             calls_start_time = time.time()
             futures = []
+            len_futures_checkpoint = 0
+            wait_checkpoint = calls_start_time
+            last_wait_time = 0.1
+            run_call_func = make_run_call_function(
+                http_data_source, responses_status_map, latencies,
+            )
 
             data_source.sadd(self._running_key, running_id)
 
-            def run_call(input_: Dict[str, Any]) -> None:
-                start_time = time.time()
-                try:
-                    response = http_data_source.request(
-                        url=input_['url'],
-                        headers=input_['headers'],
-                        method=input_['method'],
-                    )
-                except Exception as error:
-                    response = error  # type: ignore
-                    logger.exception(type(error).__name__)
-                    responses_status_map[-1] += 1
-                else:
-                    logger.debug(
-                        f'Response status code: {response.status_code}'
-                    )
-                    responses_status_map[response.status_code] += 1
-
-                latency = time.time() - start_time
-                latencies.append(latency)
-                logger.debug(f'Output got: latency={latency}')
-
-            def wait() -> bool:
-                now = time.time()
-
-                if now - calls_start_time >= duration:
-                    wait_running = False  # noqa
-                    return True
-
-                time.sleep(float(duration) / float(rps_per_node))
-                return False
-
-            while wait_running:
+            while should_running(calls_start_time, duration):
                 try:
                     input_ = data_source.lpop(self._calls_key)
 
                     if input_ is None:
-                        if wait():
-                            break
                         continue
 
                     else:
@@ -207,10 +188,19 @@ class Caller(DictDaora):
                     input_ = orjson.loads(input_)
                     logger.debug(f'Getting output for: {input_}')
 
-                    futures.append(executor.submit(run_call, input_))
+                    futures.append(executor.submit(run_call_func, input_,))
 
-                    if wait():
-                        break
+                    (
+                        last_wait_time,
+                        wait_checkpoint,
+                        len_futures_checkpoint,
+                    ) = wait_to_call(
+                        wait_checkpoint=wait_checkpoint,
+                        len_futures_checkpoint=len_futures_checkpoint,
+                        last_wait_time=last_wait_time,
+                        current_len_futures=len(futures),
+                        rps=rps_per_node,
+                    )
 
                 except Exception as error_:
                     logger.exception(type(error_).__name__)
@@ -220,25 +210,12 @@ class Caller(DictDaora):
             executor.shutdown()
 
             realized_requests = sum(responses_status_map.values())
-            results = Results(  # type: ignore
-                duration=duration,
-                requested_rps_per_node=rps_per_node,
-                realized_requests=realized_requests,
-                realized_rps=realized_requests / duration,
-                latency=Latency(
-                    mean=float(np.mean(latencies)),
-                    median=float(np.median(latencies)),
-                    percentile99=float(np.percentile(latencies, 99)),
-                    percentile95=float(np.percentile(latencies, 95)),
-                ),
-                errors_count=sum(
-                    (
-                        responses_status_map[500],
-                        responses_status_map[-1],
-                        responses_status_map[502],
-                        responses_status_map[503],
-                    )
-                ),
+            results = make_results(
+                duration,
+                rps_per_node,
+                realized_requests,
+                latencies,
+                responses_status_map,
             )
 
             data_source.hset(
@@ -290,7 +267,7 @@ class Caller(DictDaora):
 
         duration_ = float(np.mean(all_durations))
         realized_requests = float(np.sum(all_realized_requests))
-        results: Results = Results(
+        results = Results(
             duration=duration_,
             requested_rps_per_node=float(np.mean(all_requested_rps_per_node)),
             realized_requests=realized_requests,
@@ -312,8 +289,111 @@ class Caller(DictDaora):
         self.running = False
 
 
+def make_run_call_function(
+    http_data_source: requests.Session,
+    responses_status_map: DefaultDict[int, int],
+    latencies: List[float],
+) -> Callable[[Dict[str, Any]], None]:
+    def run_call(input_: Dict[str, Any]) -> None:
+        start_time = time.time()
+
+        try:
+            response = http_data_source.request(
+                url=input_['url'],
+                headers=input_['headers'],
+                method=input_['method'],
+            )
+        except Exception as error:
+            response = error  # type: ignore
+            logger.exception(type(error).__name__)
+            responses_status_map[-1] += 1
+        else:
+            logger.debug(f'Response status code: {response.status_code}')
+            responses_status_map[response.status_code] += 1
+
+        latency = time.time() - start_time
+        latencies.append(latency)
+        logger.debug(f'Output got: latency={latency}')
+
+    return run_call
+
+
+def wait_to_call(
+    wait_checkpoint: float,
+    len_futures_checkpoint: int,
+    last_wait_time: float,
+    current_len_futures: int,
+    rps: int,
+) -> Tuple[float, float, int]:
+    wait_time = last_wait_time
+    now = time.time()
+
+    if now > wait_checkpoint + 1:
+        current_rps = (current_len_futures - len_futures_checkpoint) * round(
+            now - wait_checkpoint
+        )
+        rps_diff_percent = 1 - (current_rps / rps)
+        wait_checkpoint = now
+        len_futures_checkpoint = current_len_futures
+
+        if not -1.01 <= rps_diff_percent <= 0.01:
+            wait_time -= last_wait_time * rps_diff_percent
+
+        wait_time = wait_time if wait_time >= 0 else 0
+
+        logger.debug(
+            f'current_rps={current_rps}, '
+            f'rps_diff_percent={rps_diff_percent}, '
+            f'wait_time={wait_time}'
+        )
+
+    time.sleep(wait_time)
+
+    return wait_time, wait_checkpoint, len_futures_checkpoint
+
+
+def make_results(
+    duration: int,
+    rps_per_node: int,
+    realized_requests: float,
+    latencies: Iterable[float],
+    responses_status_map: DefaultDict[int, int],
+    error: Optional[Error] = None,
+    nodes_quantity: Optional[int] = None,
+) -> Results:
+    return Results(
+        duration=duration,
+        requested_rps_per_node=rps_per_node,
+        realized_requests=realized_requests,
+        realized_rps=realized_requests / duration,
+        latency=Latency(
+            mean=float(np.mean(latencies)),
+            median=float(np.median(latencies)),
+            percentile99=float(np.percentile(latencies, 99)),
+            percentile95=float(np.percentile(latencies, 95)),
+        ),
+        errors_count=sum(
+            (
+                responses_status_map[500],
+                responses_status_map[-1],
+                responses_status_map[502],
+                responses_status_map[503],
+            )
+        ),
+        error=error,
+        nodes_quantity=nodes_quantity,
+    )
+
+
 def wait_for_ditributed_calls_in_background(
     chunli: 'Caller', config: AppConfig
 ) -> None:
     while True:
         chunli.run_distributed_calls()
+
+
+def should_running(calls_start_time: float, duration: int) -> bool:
+    if time.time() - calls_start_time > duration:
+        return False
+
+    return True
