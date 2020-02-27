@@ -1,13 +1,15 @@
 """chunli"""
 
+from dataclasses import dataclass
+
 from confdaora import confdaora_env
-from dictdaora import DictDaora
 
 
 __version__ = '0.5.1'
 
 
-class AppConfig(DictDaora):
+@dataclass
+class AppConfig:
     redis_target: str = 'redis://'
     workers: int = 1
     debug: int = 0

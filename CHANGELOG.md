@@ -1,5 +1,9 @@
 ## CHANGELOG
 
+### UNRELEASED
+
+ - Fix config class
+
 ### 0.5.1 - 2020-02-27
 
  - Fix rps_per_node calculation
