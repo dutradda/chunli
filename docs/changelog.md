@@ -1,6 +1,6 @@
 ## CHANGELOG
 
-### UNRELEASED
+### 0.5.2 - 2020-02-27
 
  - Update requirements
 
