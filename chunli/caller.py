@@ -231,12 +231,14 @@ class Caller(DictDaora):
                     percentile99=float(np.percentile(latencies, 99)),
                     percentile95=float(np.percentile(latencies, 95)),
                 ),
-                errors_count=sum((
-                    responses_status_map[500],
-                    responses_status_map[-1],
-                    responses_status_map[502],
-                    responses_status_map[503],
-                )),
+                errors_count=sum(
+                    (
+                        responses_status_map[500],
+                        responses_status_map[-1],
+                        responses_status_map[502],
+                        responses_status_map[503],
+                    )
+                ),
             )
 
             data_source.hset(
