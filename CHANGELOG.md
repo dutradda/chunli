@@ -2,6 +2,8 @@
 
 ### UNRELEASED
 
+ - Update requirements
+
  - Fix config class
 
 ### 0.5.1 - 2020-02-27

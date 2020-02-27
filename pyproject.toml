@@ -15,7 +15,10 @@ requires = [
     'requests',
     'numpy',
     'redis',
-    'gunicorn'
+    'gunicorn',
+    'uvicorn',
+    'hiredis',
+    'cython'
 ]
 description-file = 'README.md'
 requires-python = '>=3.8'
