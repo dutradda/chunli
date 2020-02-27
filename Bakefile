@@ -6,12 +6,9 @@ export PROJECT_NAME=chunli
 deploy: //check-virtualenv @confirm:secure deploy-docs release-pypi
 
 setup-chunli: //check-virtualenv
-    pip install cython==0.29.13
-    pip install -e git+https://github.com/MagicStack/uvloop@82104fb68e6cf2b469622e62169cdbeac93846cb#egg=uvloop
-    pip install -e git+https://github.com/psf/black@d9e71a75ccfefa3d9156a64c03313a0d4ad981e5#egg=black
     pip install 'https://github.com/PyCQA/pyflakes/archive/ee1eb0670a473a30f32208b7bd811282834486a6.tar.gz'
     pip install 'https://github.com/PyCQA/flake8/archive/0359533fca164ef21c40c8074fbd3899316b8f91.tar.gz'
-    pip install -e git+https://github.com/numpy/numpy-stubs@be9a47933de1b89e482b05b16c0a493da2dcb14a#egg=numpy-stubs
+    pip install -e git+https://github.com/numpy/numpy-stubs@f3c6315738489983f5f37e1477ac68373d71b470#egg=numpy-stubs
 
 integration: check-code tests-docs coverage
 
