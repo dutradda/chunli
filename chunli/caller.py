@@ -78,11 +78,12 @@ class Caller(DictDaora):
     _results_key = 'chunli:results'
     _distributed_calls_key = 'chunli:distributed'
     _calls_key = 'chunli:calls'
-    get_calls_block = None
+    _script_key = 'chunli:script'
 
     async def set_calls(self, calls: Iterable[str]) -> None:
         data_source = await self.get_data_source()
         await data_source.delete(self._calls_key)
+        await data_source.delete(self._script_key)
 
         for call_str in calls:
             try:
@@ -123,6 +124,10 @@ class Caller(DictDaora):
                     logger.warning(f'Invalid line {call_str}')
 
         data_source.close()
+
+    async def set_script(self, script_content: str) -> None:
+        data_source = await self.get_data_source()
+        await data_source.set(self._script_key, script_content)
 
     async def get_data_source(self) -> aioredis.Redis:
         return await aioredis.create_redis_pool(self.data_source_target)
@@ -182,13 +187,19 @@ class Caller(DictDaora):
             run_call_func = make_run_call_function(
                 http_data_source, responses_status_map, latencies,
             )
+            script_content = data_source.get(self._script_key)
+            get_calls_block_ = None
+
+            if script_content:
+                exec(script_content)
+                get_calls_block_ = get_calls_block  # type: ignore  # noqa
 
             data_source.sadd(self._running_key, running_id)
 
             while should_running(calls_start_time, duration):
                 try:
-                    if self.get_calls_block:
-                        inputs = self.get_calls_block()
+                    if get_calls_block_:
+                        inputs = get_calls_block_()
 
                     else:
                         inputs = data_source.lpop(self._calls_key)
@@ -199,7 +210,7 @@ class Caller(DictDaora):
                         else:
                             data_source.rpush(self._calls_key, inputs)
 
-                    inputs = orjson.loads(inputs)
+                        inputs = orjson.loads(inputs)
 
                     for input_ in inputs:
                         logger.debug(f'Getting output for: {input_}')
@@ -223,6 +234,8 @@ class Caller(DictDaora):
             for future in futures:
                 future.result()
             executor.shutdown()
+
+            data_source.delete(self._script_key)
 
             realized_requests = sum(responses_status_map.values())
             results = make_results(
@@ -302,10 +315,6 @@ class Caller(DictDaora):
 
     def stop(self) -> None:
         self.running = False
-
-    def set_script(self, script_content: str) -> None:
-        exec(script_content)
-        self.get_calls_block = get_calls_block  # type: ignore  # noqa
 
 
 def make_run_call_function(

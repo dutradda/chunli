@@ -55,8 +55,8 @@ def make_app() -> ASGIApp:
     @route.background('/script', tasks_repository=config.redis_target)
     async def script(duration: int, rps_per_node: int, body: str) -> Results:
         chunli_run = Caller(data_source_target=config.redis_target)
-        chunli_run.set_script(body)
 
+        await chunli_run.set_script(body)
         await chunli_run.start_distributed_calls(
             CallerConfig(duration=duration, rps_per_node=rps_per_node)
         )

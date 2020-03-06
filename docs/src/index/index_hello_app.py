@@ -1,6 +1,7 @@
 from typing import TypedDict
 
 from apidaora import appdaora, route
+from jsondaora import jsondaora
 
 
 @route.get('/hello')
@@ -8,6 +9,7 @@ def hello() -> str:
     return 'Hello World!'
 
 
+@jsondaora
 class Body(TypedDict):
     name: str
 
