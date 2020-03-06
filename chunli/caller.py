@@ -181,7 +181,7 @@ class Caller(DictDaora):
             executor = ThreadPoolExecutor(max_workers=100)
             calls_start_time = time.time()
             futures = []
-            len_futures_checkpoint = 0
+            calls_count_checkpoint = 0
             wait_checkpoint = calls_start_time
             last_wait_time = 0.1
             run_call_func = make_run_call_function(
@@ -189,6 +189,7 @@ class Caller(DictDaora):
             )
             script_content = data_source.get(self._script_key)
             get_calls_block_ = None
+            calls_count = 0
 
             if script_content:
                 exec(script_content)
@@ -212,21 +213,25 @@ class Caller(DictDaora):
 
                         inputs = orjson.loads(inputs)
 
-                    for input_ in inputs:
-                        logger.debug(f'Getting output for: {input_}')
-                        futures.append(executor.submit(run_call_func, input_))
+                    def call_inputs() -> None:
+                        nonlocal calls_count
+                        for input_ in inputs:
+                            logger.debug(f'Getting output for: {input_}')
+                            run_call_func(input_)
+                            calls_count += 1
 
-                        (
-                            last_wait_time,
-                            wait_checkpoint,
-                            len_futures_checkpoint,
-                        ) = wait_to_call(
-                            wait_checkpoint=wait_checkpoint,
-                            len_futures_checkpoint=len_futures_checkpoint,
-                            last_wait_time=last_wait_time,
-                            current_len_futures=len(futures),
-                            rps=rps_per_node,
-                        )
+                    futures.append(executor.submit(call_inputs))
+                    (
+                        last_wait_time,
+                        wait_checkpoint,
+                        calls_count_checkpoint,
+                    ) = wait_to_call(
+                        wait_checkpoint=wait_checkpoint,
+                        calls_count_checkpoint=calls_count_checkpoint,
+                        last_wait_time=last_wait_time,
+                        current_calls_count=calls_count,
+                        rps=rps_per_node,
+                    )
 
                 except Exception as error_:
                     logger.exception(type(error_).__name__)
@@ -349,21 +354,21 @@ def make_run_call_function(
 
 def wait_to_call(
     wait_checkpoint: float,
-    len_futures_checkpoint: int,
+    calls_count_checkpoint: int,
     last_wait_time: float,
-    current_len_futures: int,
+    current_calls_count: int,
     rps: int,
 ) -> Tuple[float, float, int]:
     wait_time = last_wait_time
     now = time.time()
 
     if now > wait_checkpoint + 1:
-        current_rps = (current_len_futures - len_futures_checkpoint) * round(
+        current_rps = (current_calls_count - calls_count_checkpoint) * round(
             now - wait_checkpoint
         )
         rps_diff_percent = 1 - (current_rps / rps)
         wait_checkpoint = now
-        len_futures_checkpoint = current_len_futures
+        calls_count_checkpoint = current_calls_count
 
         if not -1.01 <= rps_diff_percent <= 0.01:
             wait_time -= last_wait_time * rps_diff_percent
@@ -378,7 +383,7 @@ def wait_to_call(
 
     time.sleep(wait_time)
 
-    return wait_time, wait_checkpoint, len_futures_checkpoint
+    return wait_time, wait_checkpoint, calls_count_checkpoint
 
 
 def make_results(

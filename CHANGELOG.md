@@ -1,5 +1,9 @@
 ## CHANGELOG
 
+### UNRELEASED
+
+ - Improve Caller to do synchronous calls when the calls are in blocks
+
 ### 0.8.0 - 2020-03-06
 
  - Support body on calls

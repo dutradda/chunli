@@ -56,7 +56,7 @@ for filepath in ${test_files}; do
     sed ${output_tmpfile} -i -r -e \
         "s/${task_id}/4ee301eb-6487-48a0-b6ed-e5f576accfc2/g" 2>/dev/null
     $md5_cmd ${output_file} ${output_tmpfile} > ${checksum_file}
-    sleep 1
+    sleep 3
 
     cp ${curl_file2} ${tmp_curl_file2}
     sed ${tmp_curl_file2} -i -r -e \
