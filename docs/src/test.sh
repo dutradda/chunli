@@ -9,7 +9,7 @@ source ${VIRTUAL_ENV}/bin/activate
 
 test_path=$(dirname ${BASH_SOURCE[0]})
 test_regex="s%${test_path}/[^/]+/(.*)\.test.bash%\1%g"
-test_files="$(find ${test_path}/**/*script*.test.bash)"
+test_files="$(find ${test_path}/**/*.test.bash)"
 md5_cmd=$(which md5sum >/dev/null 2>&1 && echo md5sum || echo 'md5 -r')
 
 
