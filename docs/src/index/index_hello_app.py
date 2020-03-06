@@ -1,3 +1,5 @@
+from typing import TypedDict
+
 from apidaora import appdaora, route
 
 
@@ -6,4 +8,13 @@ def hello() -> str:
     return 'Hello World!'
 
 
-app = appdaora(hello)
+class Body(TypedDict):
+    name: str
+
+
+@route.post('/hello-body')
+def hello_body(body: Body) -> str:
+    return f"Hello {body['name']}!"
+
+
+app = appdaora([hello, hello_body])

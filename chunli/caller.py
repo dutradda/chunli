@@ -63,6 +63,7 @@ class Call(TypedDict):
     url: str
     method: Optional[str]
     headers: Optional[Dict[str, str]]
+    body: Optional[Dict[str, Any]]
 
 
 class CallerConfig(TypedDict):
@@ -108,6 +109,7 @@ class Caller(DictDaora):
                                     url=call_str,
                                     method=MethodType.GET.value,
                                     headers={},
+                                    body=None,
                                 )
                             ]
                         )
@@ -319,6 +321,7 @@ def make_run_call_function(
                 url=input_['url'],
                 headers=input_['headers'],
                 method=input_['method'],
+                json=input_.get('body'),
             )
         except Exception as error:
             response = error  # type: ignore

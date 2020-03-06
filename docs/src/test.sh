@@ -8,6 +8,7 @@ source ${VIRTUAL_ENV}/bin/activate
 test_path=$(dirname ${BASH_SOURCE[0]})
 test_regex="s%${test_path}/[^/]+/(.*)\.test.bash%\1%g"
 test_files="$(find ${test_path}/**/*.test.bash)"
+test_files="$(find ${test_path}/**/*script*.test.bash)"
 md5_cmd=$(which md5sum >/dev/null 2>&1 && echo md5sum || echo 'md5 -r')
 
 
@@ -36,8 +37,8 @@ for filepath in ${test_files}; do
 
     echo Testing ${filename}..
     coverage run -p $(which gunicorn) chunli:app -k uvicorn.workers.UvicornWorker -c gunicorn_conf.py >${uvicorn_output_file} 2>&1 &
-    coverage run -p $(which uvicorn) --port 8001 index_hello_app:app \
-        >${uvicorn_hello_output_file} 2>&1 &
+    # coverage run -p $(which uvicorn) --port 8001 index_hello_app:app \
+    #     >${uvicorn_hello_output_file} 2>&1 &
     sleep 5
 
     bash ${test_dir}/${filename}.test.bash >/dev/null 2>&1
@@ -69,7 +70,7 @@ for filepath in ${test_files}; do
 
     $md5_cmd ${output_file2} ${output_tmpfile2} > ${checksum_file2}
 
-    ps ax | (ps ax | awk "/uvicorn index_hello_app:app/ {print \$1}" | xargs kill -SIGTERM 2>/dev/null)
+    # ps ax | (ps ax | awk "/uvicorn index_hello_app:app/ {print \$1}" | xargs kill -SIGTERM 2>/dev/null)
     ps ax | (ps ax | awk "/gunicorn chunli:app/ {print \$1}" | xargs kill -SIGTERM 2>/dev/null)
 
     output=$(sed -r -e 's/(.*) .*/\1/g' ${checksum_file} | uniq | wc -l)
