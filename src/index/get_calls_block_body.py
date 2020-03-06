@@ -8,8 +8,8 @@ global get_calls_block
 
 def get_calls_block() -> Generator[Call, None, None]:
     yield Call(
-        url='http://localhost:8001/hello',
-        method='GET',
+        url='http://localhost:8001/hello-body',
+        method='POST',
         headers=None,
-        body=None,
+        body={'name': 'Me!'},
     )

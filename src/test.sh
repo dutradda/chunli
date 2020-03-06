@@ -3,11 +3,13 @@
 echo -e '\n---------------------------------------'
 echo -e 'Running examples outputs assertion...\n'
 
+export DEBUG=1
+
 source ${VIRTUAL_ENV}/bin/activate
 
 test_path=$(dirname ${BASH_SOURCE[0]})
 test_regex="s%${test_path}/[^/]+/(.*)\.test.bash%\1%g"
-test_files="$(find ${test_path}/**/*.test.bash)"
+test_files="$(find ${test_path}/**/*script*.test.bash)"
 md5_cmd=$(which md5sum >/dev/null 2>&1 && echo md5sum || echo 'md5 -r')
 
 
@@ -38,7 +40,7 @@ for filepath in ${test_files}; do
     coverage run -p $(which gunicorn) chunli:app -k uvicorn.workers.UvicornWorker -c gunicorn_conf.py >${uvicorn_output_file} 2>&1 &
     coverage run -p $(which uvicorn) --port 8001 index_hello_app:app \
         >${uvicorn_hello_output_file} 2>&1 &
-    sleep 5
+    sleep 3
 
     bash ${test_dir}/${filename}.test.bash >/dev/null 2>&1
 
@@ -54,6 +56,7 @@ for filepath in ${test_files}; do
     sed ${output_tmpfile} -i -r -e \
         "s/${task_id}/4ee301eb-6487-48a0-b6ed-e5f576accfc2/g" 2>/dev/null
     $md5_cmd ${output_file} ${output_tmpfile} > ${checksum_file}
+    sleep 1
 
     cp ${curl_file2} ${tmp_curl_file2}
     sed ${tmp_curl_file2} -i -r -e \
