@@ -1,6 +1,6 @@
 ## CHANGELOG
 
-### UNRELEASED
+### 0.6.0 - 2020-03-06
 
  - Add support for make calls in block
 
