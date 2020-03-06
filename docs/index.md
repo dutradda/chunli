@@ -146,3 +146,40 @@ Gets chunli's job results:
 ```
 {!./src/index/index_02_json_array_input_curl2.bash.output!}
 ```
+
+
+## Python Script Example
+
+Running the server:
+
+```bash
+uvicorn chunli:app
+```
+
+Create chunli's input script:
+
+```python
+# /tmp/get_calls_block.py
+
+{!./src/index/get_calls_block.py!}
+```
+
+Start chunli's job:
+
+```bash
+{!./src/index/index_03_script_input_curl.bash!}
+```
+
+```
+{!./src/index/index_03_script_input_curl.bash.output!}
+```
+
+Gets chunli's job results:
+
+```bash
+{!./src/index/index_03_script_input_curl2.bash!}
+```
+
+```
+{!./src/index/index_03_script_input_curl2.bash.output!}
+```

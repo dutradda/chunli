@@ -52,11 +52,31 @@ def make_app() -> ASGIApp:
                 error=Error(name=type(error).__name__, args=error.args)
             )
 
+    @route.background('/script', tasks_repository=config.redis_target)
+    async def script(duration: int, rps_per_node: int, body: str) -> Results:
+        chunli_run = Caller(data_source_target=config.redis_target)
+        chunli_run.set_script(body)
+
+        await chunli_run.start_distributed_calls(
+            CallerConfig(duration=duration, rps_per_node=rps_per_node)
+        )
+
+        try:
+            results = await chunli_run.get_results(duration)
+
+            return results
+
+        except Exception as error:
+            logger.exception(error)
+            return Results(  # type: ignore
+                error=Error(name=type(error).__name__, args=error.args)
+            )
+
     @route.get('/status')
     async def status() -> Status:
         return Status(chunli=random.choice(_CHUN_LI_ATTACKS))
 
-    return appdaora([run, status])
+    return appdaora([run, status, script])
 
 
 @jsondaora

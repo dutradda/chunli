@@ -77,6 +77,7 @@ class Caller(DictDaora):
     _results_key = 'chunli:results'
     _distributed_calls_key = 'chunli:distributed'
     _calls_key = 'chunli:calls'
+    get_calls_block = None
 
     async def set_calls(self, calls: Iterable[str]) -> None:
         data_source = await self.get_data_source()
@@ -184,13 +185,17 @@ class Caller(DictDaora):
 
             while should_running(calls_start_time, duration):
                 try:
-                    inputs = data_source.lpop(self._calls_key)
-
-                    if inputs is None:
-                        continue
+                    if self.get_calls_block:
+                        inputs = self.get_calls_block()
 
                     else:
-                        data_source.rpush(self._calls_key, inputs)
+                        inputs = data_source.lpop(self._calls_key)
+
+                        if inputs is None:
+                            continue
+
+                        else:
+                            data_source.rpush(self._calls_key, inputs)
 
                     inputs = orjson.loads(inputs)
 
@@ -295,6 +300,10 @@ class Caller(DictDaora):
 
     def stop(self) -> None:
         self.running = False
+
+    def set_script(self, script_content: str) -> None:
+        exec(script_content)
+        self.get_calls_block = get_calls_block  # type: ignore  # noqa
 
 
 def make_run_call_function(
