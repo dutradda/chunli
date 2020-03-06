@@ -82,35 +82,42 @@ class Caller(DictDaora):
         data_source = await self.get_data_source()
         await data_source.delete(self._calls_key)
 
-        for call in calls:
+        for call_str in calls:
             try:
-                call_ = orjson.loads(call)
+                calls_group = orjson.loads(call_str)
 
-                if 'method' not in call_:
-                    call_['method'] = MethodType.GET.value
+                if not isinstance(calls_group, list):
+                    calls_group = [calls_group]
 
-                call_ = typed_dict_asjson(as_typed_dict(call_, Call), Call)
-                await data_source.rpush(self._calls_key, call_)
+                for call in calls_group:
+                    if 'method' not in call:
+                        call['method'] = MethodType.GET.value
+
+                calls_group = orjson.dumps(
+                    [as_typed_dict(c, Call) for c in calls_group]
+                )
+                await data_source.rpush(self._calls_key, calls_group)
 
             except Exception:
-                if call.startswith('http'):
+                if call_str.startswith('http'):
                     try:
-                        call_ = typed_dict_asjson(
-                            Call(
-                                url=call,
-                                method=MethodType.GET.value,
-                                headers={},
-                            ),
-                            Call,
+                        calls_group = orjson.dumps(
+                            [
+                                Call(
+                                    url=call_str,
+                                    method=MethodType.GET.value,
+                                    headers={},
+                                )
+                            ]
                         )
-                        await data_source.rpush(self._calls_key, call_)
+                        await data_source.rpush(self._calls_key, calls_group)
 
                     except Exception as error:
                         logger.exception(error)
-                        logger.warning(f'Invalid line {call}')
+                        logger.warning(f'Invalid line {call_str}')
 
                 else:
-                    logger.warning(f'Invalid line {call}')
+                    logger.warning(f'Invalid line {call_str}')
 
         data_source.close()
 
@@ -177,30 +184,31 @@ class Caller(DictDaora):
 
             while should_running(calls_start_time, duration):
                 try:
-                    input_ = data_source.lpop(self._calls_key)
+                    inputs = data_source.lpop(self._calls_key)
 
-                    if input_ is None:
+                    if inputs is None:
                         continue
 
                     else:
-                        data_source.rpush(self._calls_key, input_)
+                        data_source.rpush(self._calls_key, inputs)
 
-                    input_ = orjson.loads(input_)
-                    logger.debug(f'Getting output for: {input_}')
+                    inputs = orjson.loads(inputs)
 
-                    futures.append(executor.submit(run_call_func, input_,))
+                    for input_ in inputs:
+                        logger.debug(f'Getting output for: {input_}')
+                        futures.append(executor.submit(run_call_func, input_))
 
-                    (
-                        last_wait_time,
-                        wait_checkpoint,
-                        len_futures_checkpoint,
-                    ) = wait_to_call(
-                        wait_checkpoint=wait_checkpoint,
-                        len_futures_checkpoint=len_futures_checkpoint,
-                        last_wait_time=last_wait_time,
-                        current_len_futures=len(futures),
-                        rps=rps_per_node,
-                    )
+                        (
+                            last_wait_time,
+                            wait_checkpoint,
+                            len_futures_checkpoint,
+                        ) = wait_to_call(
+                            wait_checkpoint=wait_checkpoint,
+                            len_futures_checkpoint=len_futures_checkpoint,
+                            last_wait_time=last_wait_time,
+                            current_len_futures=len(futures),
+                            rps=rps_per_node,
+                        )
 
                 except Exception as error_:
                     logger.exception(type(error_).__name__)

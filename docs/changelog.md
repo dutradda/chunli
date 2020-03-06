@@ -1,5 +1,9 @@
 ## CHANGELOG
 
+### UNRELEASED
+
+ - Add support for make calls in block
+
 ### 0.5.2 - 2020-02-27
 
  - Update requirements

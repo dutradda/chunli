@@ -110,3 +110,39 @@ Gets chunli's job results:
 ```
 {!./src/index/index_01_json_input_curl2.bash.output!}
 ```
+
+
+## Json Array Lines Example
+
+Running the server:
+
+```bash
+uvicorn chunli:app
+```
+
+
+Create chunli's input file:
+
+```bash
+{!./src/index/index_02_json_array_input.test.bash!}
+```
+
+Start chunli's job:
+
+```bash
+{!./src/index/index_02_json_array_input_curl.bash!}
+```
+
+```
+{!./src/index/index_02_json_array_input_curl.bash.output!}
+```
+
+Gets chunli's job results:
+
+```bash
+{!./src/index/index_02_json_array_input_curl2.bash!}
+```
+
+```
+{!./src/index/index_02_json_array_input_curl2.bash.output!}
+```
