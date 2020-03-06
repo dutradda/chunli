@@ -1,5 +1,11 @@
 ## CHANGELOG
 
+### UNRELEASED
+
+ - Support body on calls
+
+ - Fix run calls with python script
+
 ### 0.7.0 - 2020-03-06
 
  - Add support to run the calls with a python script
