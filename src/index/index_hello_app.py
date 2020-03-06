@@ -2,7 +2,7 @@ from apidaora import appdaora, route
 
 
 @route.get('/hello')
-def hello():
+def hello() -> str:
     return 'Hello World!'
 
 
