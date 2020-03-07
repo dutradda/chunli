@@ -240,7 +240,7 @@ Create chunli's input script:
 
 from typing import Generator
 
-from chunli.caller import Call
+from chunli.call import Call
 
 
 global get_calls_block
@@ -313,7 +313,7 @@ Create chunli's input script:
 
 from typing import Generator
 
-from chunli.caller import Call
+from chunli.call import Call
 
 
 global get_calls_block

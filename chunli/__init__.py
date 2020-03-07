@@ -18,7 +18,4 @@ class AppConfig:
 config: AppConfig = confdaora_env(AppConfig)
 
 
-from .app import app  # noqa isort:skip
-
-
 __all__ = ['app', 'config']

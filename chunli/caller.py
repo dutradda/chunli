@@ -26,6 +26,7 @@ from dictdaora import DictDaora
 from jsondaora import as_typed_dict, jsondaora, typed_dict_asjson
 
 from . import AppConfig
+from .call import Call
 from .exceptions import ResultsTimeoutError
 
 
@@ -56,14 +57,6 @@ class Results(TypedDict):
     error: Optional[Error]
     nodes_quantity: Optional[int]
     errors_count: Optional[int]
-
-
-@jsondaora
-class Call(TypedDict):
-    url: str
-    method: Optional[str]
-    headers: Optional[Dict[str, str]]
-    body: Optional[Dict[str, Any]]
 
 
 class CallerConfig(TypedDict):

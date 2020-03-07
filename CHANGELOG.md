@@ -1,5 +1,9 @@
 ## CHANGELOG
 
+### UNRELEASED
+
+ - Move the Call class to a isolated module
+
 ### 0.9.0 - 2020-03-06
 
  - Improve Caller to do synchronous calls when the calls are in blocks
