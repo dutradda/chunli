@@ -37,7 +37,7 @@ for filepath in ${test_files}; do
     PYTHONPATH=${test_dir}:${PYTHONPATH}
 
     echo Testing ${filename}..
-    coverage run -p $(which gunicorn) chunli:app -k uvicorn.workers.UvicornWorker -c gunicorn_conf.py >${uvicorn_output_file} 2>&1 &
+    coverage run -p $(which gunicorn) chunli.app:app -k uvicorn.workers.UvicornWorker -c gunicorn_conf.py >${uvicorn_output_file} 2>&1 &
     coverage run -p $(which uvicorn) --port 8001 index_hello_app:app \
         >${uvicorn_hello_output_file} 2>&1 &
     sleep 3
@@ -56,7 +56,7 @@ for filepath in ${test_files}; do
     sed ${output_tmpfile} -i -r -e \
         "s/${task_id}/4ee301eb-6487-48a0-b6ed-e5f576accfc2/g" 2>/dev/null
     $md5_cmd ${output_file} ${output_tmpfile} > ${checksum_file}
-    sleep 3
+    sleep 5
 
     cp ${curl_file2} ${tmp_curl_file2}
     sed ${tmp_curl_file2} -i -r -e \
