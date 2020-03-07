@@ -1,6 +1,6 @@
 ## CHANGELOG
 
-### UNRELEASED
+### 0.10.0 - 2020-03-06
 
  - Move the Call class to a isolated module
 
