@@ -74,9 +74,9 @@ HTTP/1.1 201 Created
 date: Thu, 1st January 1970 00:00:00 GMT
 server: uvicorn
 content-type: application/json
-content-length: 110
+content-length: 137
 
-{"task_id":"4ee301eb-6487-48a0-b6ed-e5f576accfc2","start_time":"1970-01-01T00:00:00+00:00","status":"running"}
+{"task_id":"4ee301eb-6487-48a0-b6ed-e5f576accfc2","start_time":"1970-01-01T00:00:00+00:00","status":"running","signature":"b6449827ba79"}
 
 ```
 
@@ -95,7 +95,7 @@ server: uvicorn
 content-type: application/json
 content-length: 409
 
-{"end_time":"1970-01-01T00:00:00+00:00","result":{"duration":1.0,"requested_rps_per_node":1.0,"realized_requests":1.0,"realized_rps":1.0,"latency":{"mean":1.0,"median":1.0,"percentile99":1.0,"percentile95":1.0},"error":null,"nodes_quantity":1,"errors_count":0},"task_id":"4ee301eb-6487-48a0-b6ed-e5f576accfc2","start_time":"1970-01-01T00:00:00+00:00","status":"finished"}
+{"end_time":"1970-01-01T00:00:00+00:00","result":{"duration":1.0,"requested_rps_per_node":1.0,"realized_requests":1.0,"realized_rps":1.0,"latency":{"mean":1.0,"median":1.0,"percentile99":1.0,"percentile95":1.0},"error":null,"nodes_quantity":1,"errors_count":0},"task_id":"4ee301eb-6487-48a0-b6ed-e5f576accfc2","start_time":"1970-01-01T00:00:00+00:00","status":"finished","signature":"b6449827ba79"}
 
 ```
 
@@ -136,9 +136,9 @@ HTTP/1.1 201 Created
 date: Thu, 1st January 1970 00:00:00 GMT
 server: uvicorn
 content-type: application/json
-content-length: 110
+content-length: 137
 
-{"task_id":"4ee301eb-6487-48a0-b6ed-e5f576accfc2","start_time":"1970-01-01T00:00:00+00:00","status":"running"}
+{"task_id":"4ee301eb-6487-48a0-b6ed-e5f576accfc2","start_time":"1970-01-01T00:00:00+00:00","status":"running","signature":"b6449827ba79"}
 
 ```
 
@@ -157,7 +157,7 @@ server: uvicorn
 content-type: application/json
 content-length: 409
 
-{"end_time":"1970-01-01T00:00:00+00:00","result":{"duration":1.0,"requested_rps_per_node":1.0,"realized_requests":1.0,"realized_rps":1.0,"latency":{"mean":1.0,"median":1.0,"percentile99":1.0,"percentile95":1.0},"error":null,"nodes_quantity":1,"errors_count":0},"task_id":"4ee301eb-6487-48a0-b6ed-e5f576accfc2","start_time":"1970-01-01T00:00:00+00:00","status":"finished"}
+{"end_time":"1970-01-01T00:00:00+00:00","result":{"duration":1.0,"requested_rps_per_node":1.0,"realized_requests":1.0,"realized_rps":1.0,"latency":{"mean":1.0,"median":1.0,"percentile99":1.0,"percentile95":1.0},"error":null,"nodes_quantity":1,"errors_count":0},"task_id":"4ee301eb-6487-48a0-b6ed-e5f576accfc2","start_time":"1970-01-01T00:00:00+00:00","status":"finished","signature":"b6449827ba79"}
 
 ```
 
@@ -199,9 +199,9 @@ HTTP/1.1 201 Created
 date: Thu, 1st January 1970 00:00:00 GMT
 server: uvicorn
 content-type: application/json
-content-length: 110
+content-length: 137
 
-{"task_id":"4ee301eb-6487-48a0-b6ed-e5f576accfc2","start_time":"1970-01-01T00:00:00+00:00","status":"running"}
+{"task_id":"4ee301eb-6487-48a0-b6ed-e5f576accfc2","start_time":"1970-01-01T00:00:00+00:00","status":"running","signature":"b6449827ba79"}
 
 ```
 
@@ -220,7 +220,7 @@ server: uvicorn
 content-type: application/json
 content-length: 409
 
-{"end_time":"1970-01-01T00:00:00+00:00","result":{"duration":1.0,"requested_rps_per_node":1.0,"realized_requests":1.0,"realized_rps":1.0,"latency":{"mean":1.0,"median":1.0,"percentile99":1.0,"percentile95":1.0},"error":null,"nodes_quantity":1,"errors_count":0},"task_id":"4ee301eb-6487-48a0-b6ed-e5f576accfc2","start_time":"1970-01-01T00:00:00+00:00","status":"finished"}
+{"end_time":"1970-01-01T00:00:00+00:00","result":{"duration":1.0,"requested_rps_per_node":1.0,"realized_requests":1.0,"realized_rps":1.0,"latency":{"mean":1.0,"median":1.0,"percentile99":1.0,"percentile95":1.0},"error":null,"nodes_quantity":1,"errors_count":0},"task_id":"4ee301eb-6487-48a0-b6ed-e5f576accfc2","start_time":"1970-01-01T00:00:00+00:00","status":"finished","signature":"b6449827ba79"}
 
 ```
 
@@ -272,9 +272,9 @@ HTTP/1.1 201 Created
 date: Thu, 1st January 1970 00:00:00 GMT
 server: uvicorn
 content-type: application/json
-content-length: 110
+content-length: 137
 
-{"task_id":"4ee301eb-6487-48a0-b6ed-e5f576accfc2","start_time":"1970-01-01T00:00:00+00:00","status":"running"}
+{"task_id":"4ee301eb-6487-48a0-b6ed-e5f576accfc2","start_time":"1970-01-01T00:00:00+00:00","status":"running","signature":"2504c7a91900"}
 
 ```
 
@@ -293,7 +293,7 @@ server: uvicorn
 content-type: application/json
 content-length: 409
 
-{"end_time":"1970-01-01T00:00:00+00:00","result":{"duration":1.0,"requested_rps_per_node":1.0,"realized_requests":1.0,"realized_rps":1.0,"latency":{"mean":1.0,"median":1.0,"percentile99":1.0,"percentile95":1.0},"error":null,"nodes_quantity":1,"errors_count":0},"task_id":"4ee301eb-6487-48a0-b6ed-e5f576accfc2","start_time":"1970-01-01T00:00:00+00:00","status":"finished"}
+{"end_time":"1970-01-01T00:00:00+00:00","result":{"duration":1.0,"requested_rps_per_node":1.0,"realized_requests":1.0,"realized_rps":1.0,"latency":{"mean":1.0,"median":1.0,"percentile99":1.0,"percentile95":1.0},"error":null,"nodes_quantity":1,"errors_count":0},"task_id":"4ee301eb-6487-48a0-b6ed-e5f576accfc2","start_time":"1970-01-01T00:00:00+00:00","status":"finished","signature":"2504c7a91900"}
 
 ```
 
@@ -345,9 +345,9 @@ HTTP/1.1 201 Created
 date: Thu, 1st January 1970 00:00:00 GMT
 server: uvicorn
 content-type: application/json
-content-length: 110
+content-length: 137
 
-{"task_id":"4ee301eb-6487-48a0-b6ed-e5f576accfc2","start_time":"1970-01-01T00:00:00+00:00","status":"running"}
+{"task_id":"4ee301eb-6487-48a0-b6ed-e5f576accfc2","start_time":"1970-01-01T00:00:00+00:00","status":"running","signature":"2504c7a91900"}
 
 ```
 
@@ -366,6 +366,6 @@ server: uvicorn
 content-type: application/json
 content-length: 409
 
-{"end_time":"1970-01-01T00:00:00+00:00","result":{"duration":1.0,"requested_rps_per_node":1.0,"realized_requests":1.0,"realized_rps":1.0,"latency":{"mean":1.0,"median":1.0,"percentile99":1.0,"percentile95":1.0},"error":null,"nodes_quantity":1,"errors_count":0},"task_id":"4ee301eb-6487-48a0-b6ed-e5f576accfc2","start_time":"1970-01-01T00:00:00+00:00","status":"finished"}
+{"end_time":"1970-01-01T00:00:00+00:00","result":{"duration":1.0,"requested_rps_per_node":1.0,"realized_requests":1.0,"realized_rps":1.0,"latency":{"mean":1.0,"median":1.0,"percentile99":1.0,"percentile95":1.0},"error":null,"nodes_quantity":1,"errors_count":0},"task_id":"4ee301eb-6487-48a0-b6ed-e5f576accfc2","start_time":"1970-01-01T00:00:00+00:00","status":"finished","signature":"2504c7a91900"}
 
 ```

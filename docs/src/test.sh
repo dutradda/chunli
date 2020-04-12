@@ -3,7 +3,7 @@
 echo -e '\n---------------------------------------'
 echo -e 'Running examples outputs assertion...\n'
 
-export DEBUG=1
+# export DEBUG=1
 
 source ${VIRTUAL_ENV}/bin/activate
 
@@ -11,7 +11,14 @@ test_path=$(dirname ${BASH_SOURCE[0]})
 test_regex="s%${test_path}/[^/]+/(.*)\.test.bash%\1%g"
 test_files="$(find ${test_path}/**/*.test.bash)"
 md5_cmd=$(which md5sum >/dev/null 2>&1 && echo md5sum || echo 'md5 -r')
+uvicorn_output_file=/tmp/uvicorn.output
+uvicorn_hello_output_file=/tmp/uvicorn-index_hello_app.output
 
+coverage run -p $(which gunicorn) chunli.app:app -k uvicorn.workers.UvicornWorker \
+    -c gunicorn_conf.py >${uvicorn_output_file} 2>&1 &
+coverage run -p $(which uvicorn) docs.src.index.index_hello_app:app --port 8001  \
+    >${uvicorn_hello_output_file} 2>&1 &
+sleep 2
 
 for filepath in ${test_files}; do
     filename=$(echo ${filepath} | sed -r -e ${test_regex})
@@ -31,16 +38,10 @@ for filepath in ${test_files}; do
     task_time_sub='"\1_time":"1970-01-01T00:00:00+00:00"'
     task_id_regex='.*"task_id":"([0-9a-z-]+)".*'
     task_id_sub='\1'
-    uvicorn_output_file=/tmp/uvicorn-${filename}.output
-    uvicorn_hello_output_file=/tmp/uvicorn-index_hello_app.output
     test_module=$(echo ${filepath} | tr '/' '.' | sed -r -e 's/\.py//g')
     PYTHONPATH=${test_dir}:${PYTHONPATH}
 
     echo Testing ${filename}..
-    coverage run -p $(which gunicorn) chunli.app:app -k uvicorn.workers.UvicornWorker -c gunicorn_conf.py >${uvicorn_output_file} 2>&1 &
-    coverage run -p $(which uvicorn) --port 8001 index_hello_app:app \
-        >${uvicorn_hello_output_file} 2>&1 &
-    sleep 3
 
     bash ${test_dir}/${filename}.test.bash >/dev/null 2>&1
 
@@ -72,9 +73,6 @@ for filepath in ${test_files}; do
 
     $md5_cmd ${output_file2} ${output_tmpfile2} > ${checksum_file2}
 
-    ps ax | (ps ax | awk "/uvicorn index_hello_app:app/ {print \$1}" | xargs kill -SIGTERM 2>/dev/null)
-    ps ax | (ps ax | awk "/gunicorn chunli:app/ {print \$1}" | xargs kill -SIGTERM 2>/dev/null)
-
     output=$(sed -r -e 's/(.*) .*/\1/g' ${checksum_file} | uniq | wc -l)
 
     if ! [ ${output} -eq 1 ]; then
@@ -82,6 +80,10 @@ for filepath in ${test_files}; do
         diff -u ${output_file} ${output_tmpfile}
         echo -e "\nuvicorn output: ${uvicorn_output_file}\n"
         cat ${uvicorn_output_file}
+
+        ps ax | (ps ax | awk "/uvicorn docs.src.index.index_hello_app:app/ {print \$1}" | xargs kill -SIGTERM 2>/dev/null)
+        ps ax | (ps ax | awk "/gunicorn chunli:app/ {print \$1}" | xargs kill -SIGKILL 2>/dev/null)
+
         exit 1
     fi
 
@@ -92,11 +94,18 @@ for filepath in ${test_files}; do
         diff -u ${output_file2} ${output_tmpfile2}
         echo -e "\nuvicorn output: ${uvicorn_output_file}\n"
         cat ${uvicorn_output_file}
+
+        ps ax | (ps ax | awk "/uvicorn docs.src.index.index_hello_app:app/ {print \$1}" | xargs kill -SIGTERM 2>/dev/null)
+        ps ax | (ps ax | awk "/gunicorn chunli:app/ {print \$1}" | xargs kill -SIGKILL 2>/dev/null)
+
         exit 1
     fi
 
     echo OK
 done
+
+ps ax | (ps ax | awk "/uvicorn docs.src.index.index_hello_app:app/ {print \$1}" | xargs kill -SIGTERM 2>/dev/null)
+ps ax | (ps ax | awk "/gunicorn chunli:app/ {print \$1}" | xargs kill -SIGKILL 2>/dev/null)
 
 echo 'Docs examples outputs assertion passed!'
 echo -e '---------------------------------------\n'
