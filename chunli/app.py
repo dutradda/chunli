@@ -31,7 +31,7 @@ def make_app() -> ASGIApp:
     chunli = Caller(data_source_target=config.redis_target)
     executor.submit(wait_for_ditributed_calls_in_background, chunli, config)
 
-    @route.background('/run', tasks_repository=config.redis_target)
+    @route.background('/run', tasks_repository_uri=config.redis_target)
     async def run(duration: int, rps_per_node: int, body: GzipBody) -> Results:
         calls = (line.strip('\n') for line in body.open())
         chunli_run = Caller(data_source_target=config.redis_target)
@@ -52,7 +52,7 @@ def make_app() -> ASGIApp:
                 error=Error(name=type(error).__name__, args=error.args)
             )
 
-    @route.background('/script', tasks_repository=config.redis_target)
+    @route.background('/script', tasks_repository_uri=config.redis_target)
     async def script(duration: int, rps_per_node: int, body: str) -> Results:
         chunli_run = Caller(data_source_target=config.redis_target)
 
