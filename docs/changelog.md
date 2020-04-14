@@ -1,6 +1,6 @@
 ## CHANGELOG
 
-### UNRELEASED
+### 0.10.3 - 2020-04-14
 
  - Update tests for new apidaora version
 
