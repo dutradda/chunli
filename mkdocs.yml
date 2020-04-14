@@ -3,6 +3,7 @@ site_description: Distributed load test application
 
 theme:
     name: 'material'
+    custom_dir: 'theme'
     palette:
       primary: 'light-blue'
       accent: 'grey'
@@ -12,9 +13,6 @@ theme:
 repo_name: dutradda/chunli
 repo_url: https://github.com/dutradda/chunli
 edit_uri: ''
-google_analytics:
-    - ''
-    - 'auto'
 
 nav:
     - chunli: 'index.md'
@@ -28,10 +26,11 @@ nav:
     - Changelog: changelog.md
 
 markdown_extensions:
-  - markdown.extensions.codehilite:
-      guess_lang: false
   - markdown_include.include:
       base_path: docs
-  - admonition
-  - codehilite
-  - extra
+  - codehilite:
+      guess_lang: false
+
+extra_css:
+  - stylesheets/dark_theme.css
+  - stylesheets/codehilite.css
