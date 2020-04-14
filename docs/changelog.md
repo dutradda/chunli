@@ -1,5 +1,9 @@
 ## CHANGELOG
 
+### UNRELEASED
+
+ - Update tests for new apidaora version
+
 ### 0.10.2 - 2020-04-13
 
  - Fix new apidaora interface
