@@ -65,35 +65,22 @@
     <link rel="stylesheet" href="../assets/fonts/material-icons.css">
     
     
+      <link rel="stylesheet" href="../stylesheets/dark_theme.css">
     
-      
-        
-<script>
-  window.ga = window.ga || function() {
-    (ga.q = ga.q || []).push(arguments)
-  }
-  ga.l = +new Date
-  /* Setup integration and send page view */
-  ga("create", "", "auto")
-  ga("set", "anonymizeIp", true)
-  ga("send", "pageview")
-  /* Register handler to log search on blur */
-  document.addEventListener("DOMContentLoaded", () => {
-    if (document.forms.search) {
-      var query = document.forms.search.query
-      query.addEventListener("blur", function() {
-        if (this.value) {
-          var path = document.location.pathname;
-          ga("send", "pageview", path + "?q=" + this.value)
-        }
-      })
-    }
-  })
-</script>
-<script async src="https://www.google-analytics.com/analytics.js"></script>
+      <link rel="stylesheet" href="../stylesheets/codehilite.css">
+    
+    
       
     
     
+<meta name="theme-color" content="#212121">
+
+<link rel='icon' href='/assets/images/favicon.ico'>
+
+<meta name='apple-mobile-web-app-capable' content='yes'>
+<meta name='mobile-web-app-capable' content='yes'>
+<link rel="manifest" href="/manifest.json">
+
   </head>
   
     
@@ -304,6 +291,13 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#0103-2020-04-14" class="md-nav__link">
+    0.10.3 - 2020-04-14
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#0102-2020-04-13" class="md-nav__link">
     0.10.2 - 2020-04-13
   </a>
@@ -465,6 +459,13 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#0103-2020-04-14" class="md-nav__link">
+    0.10.3 - 2020-04-14
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#0102-2020-04-13" class="md-nav__link">
     0.10.2 - 2020-04-13
   </a>
@@ -608,6 +609,10 @@
                   <h1>Changelog</h1>
                 
                 <h2 id="changelog">CHANGELOG</h2>
+<h3 id="0103-2020-04-14">0.10.3 - 2020-04-14</h3>
+<ul>
+<li>Update tests for new apidaora version</li>
+</ul>
 <h3 id="0102-2020-04-13">0.10.2 - 2020-04-13</h3>
 <ul>
 <li>Fix new apidaora interface</li>
