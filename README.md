@@ -70,7 +70,7 @@ curl -X POST \
 ```
 HTTP/1.1 100 Continue
 
-HTTP/1.1 201 Created
+HTTP/1.1 202 Accepted
 date: Thu, 1st January 1970 00:00:00 GMT
 server: uvicorn
 content-type: application/json
@@ -132,7 +132,7 @@ curl -X POST \
 ```
 HTTP/1.1 100 Continue
 
-HTTP/1.1 201 Created
+HTTP/1.1 202 Accepted
 date: Thu, 1st January 1970 00:00:00 GMT
 server: uvicorn
 content-type: application/json
@@ -195,7 +195,7 @@ curl -X POST \
 ```
 HTTP/1.1 100 Continue
 
-HTTP/1.1 201 Created
+HTTP/1.1 202 Accepted
 date: Thu, 1st January 1970 00:00:00 GMT
 server: uvicorn
 content-type: application/json
@@ -268,7 +268,7 @@ curl -X POST \
 ```
 HTTP/1.1 100 Continue
 
-HTTP/1.1 201 Created
+HTTP/1.1 202 Accepted
 date: Thu, 1st January 1970 00:00:00 GMT
 server: uvicorn
 content-type: application/json
@@ -341,7 +341,7 @@ curl -X POST \
 ```
 HTTP/1.1 100 Continue
 
-HTTP/1.1 201 Created
+HTTP/1.1 202 Accepted
 date: Thu, 1st January 1970 00:00:00 GMT
 server: uvicorn
 content-type: application/json
