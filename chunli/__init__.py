@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from confdaora import confdaora_env
 
 
-__version__ = '0.10.4'
+__version__ = '0.10.5'
 
 
 @dataclass
