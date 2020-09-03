@@ -13,6 +13,8 @@ class AppConfig:
     redis_target: str = 'redis://'
     workers: int = 1
     debug: int = 0
+    http_max_connections: int = 4096
+    http_timeout: int = 5
 
 
 config: AppConfig = confdaora_env(AppConfig)

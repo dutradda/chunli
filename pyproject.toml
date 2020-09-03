@@ -12,7 +12,7 @@ requires = [
     'apidaora',
     'confdaora',
     'aioredis',
-    'requests',
+    'httpx',
     'numpy',
     'redis',
     'gunicorn',

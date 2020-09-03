@@ -16,15 +16,15 @@ from typing import (
 )
 
 import aioredis  # type: ignore
+import httpx
 import numpy as np
 import orjson
 import redis
-import requests
 from apidaora import MethodType
 from dictdaora import DictDaora
 from jsondaora import as_typed_dict, jsondaora, typed_dict_asjson
 
-from . import AppConfig
+from . import AppConfig, config
 from .call import Call
 from .exceptions import ResultsTimeoutError
 
@@ -176,7 +176,13 @@ class Caller(DictDaora):
     def _run_calls(
         self, duration: int, rps_per_node: int, rampup_time: Optional[int]
     ) -> None:
-        with requests.Session() as http_data_source:
+        with httpx.Client(
+            limits=httpx.Limits(
+                max_connections=config.http_max_connections,
+                max_keepalive_connections=config.http_max_connections,
+            ),
+            timeout=config.http_timeout,
+        ) as http_data_source:
             if rampup_time is None:
                 rampup_time = 0
 
@@ -334,7 +340,7 @@ class Caller(DictDaora):
 
 
 def make_run_call_function(
-    http_data_source: requests.Session,
+    http_data_source: httpx.Client,
     responses_status_map: DefaultDict[int, int],
     latencies: List[float],
 ) -> Callable[[Dict[str, Any]], None]:

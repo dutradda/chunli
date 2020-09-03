@@ -1,5 +1,9 @@
 ## CHANGELOG
 
+### UNRELEASED
+
+ - Replace requests to httpx
+
 ### 0.11.2 - 2020-09-03
 
  - Fix wait_call function
