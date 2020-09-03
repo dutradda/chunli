@@ -81,6 +81,9 @@ class Caller(DictDaora):
         await data_source.delete(self._script_key)
 
         for call_str in calls:
+            if not call_str:
+                continue
+
             try:
                 calls_group = orjson.loads(call_str)
 
@@ -119,10 +122,13 @@ class Caller(DictDaora):
                     logger.warning(f'Invalid line {call_str}')
 
         data_source.close()
+        await data_source.wait_closed()
 
     async def set_script(self, script_content: str) -> None:
         data_source = await self.get_data_source()
         await data_source.set(self._script_key, script_content)
+        data_source.close()
+        await data_source.wait_closed()
 
     async def get_data_source(self) -> aioredis.Redis:
         return await aioredis.create_redis_pool(self.data_source_target)
@@ -326,6 +332,7 @@ class Caller(DictDaora):
             rampup_time=rampup_time,
         )
         data_source.close()
+        await data_source.wait_closed()
         return results
 
     def stop(self) -> None:

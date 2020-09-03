@@ -62,7 +62,7 @@ Start chunli's job (needs curl [installed](https://curl.haxx.se/docs/install.htm
 
 ```bash
 curl -X POST \
-    -i 'localhost:8000/run?duration=3&rps_per_node=1' \
+    -i 'http://localhost:8000/run?duration=3&rps_per_node=1' \
     --upload-file /tmp/hello-call.gz
 
 ```
@@ -84,7 +84,7 @@ Gets chunli's job results:
 
 ```bash
 sleep 5 && \
-    curl -i 'localhost:8000/run?task_id=4ee301eb-6487-48a0-b6ed-e5f576accfc2'
+    curl -i 'http://localhost:8000/run?task_id=4ee301eb-6487-48a0-b6ed-e5f576accfc2'
 
 ```
 
@@ -122,7 +122,7 @@ Start chunli's job:
 
 ```bash
 curl -X POST \
-    -i 'localhost:8000/run?duration=10&rps_per_node=10&rampup_time=5' \
+    -i 'http://localhost:8000/run?duration=10&rps_per_node=10&rampup_time=5' \
     --upload-file /tmp/hello-call.gz
 
 ```
@@ -144,7 +144,7 @@ Gets chunli's job results:
 
 ```bash
 sleep 12 && \
-    curl -i 'localhost:8000/run?task_id=4ee301eb-6487-48a0-b6ed-e5f576accfc2'
+    curl -i 'http://localhost:8000/run?task_id=4ee301eb-6487-48a0-b6ed-e5f576accfc2'
 
 ```
 
@@ -184,7 +184,7 @@ Start chunli's job:
 
 ```bash
 curl -X POST \
-    -i 'localhost:8000/run?duration=1&rps_per_node=10' \
+    -i 'http://localhost:8000/run?duration=1&rps_per_node=10' \
     --upload-file /tmp/hello-call.gz
 
 ```
@@ -206,7 +206,7 @@ Gets chunli's job results:
 
 ```bash
 sleep 3 && \
-    curl -i 'localhost:8000/run?task_id=4ee301eb-6487-48a0-b6ed-e5f576accfc2'
+    curl -i 'http://localhost:8000/run?task_id=4ee301eb-6487-48a0-b6ed-e5f576accfc2'
 
 ```
 
@@ -247,7 +247,7 @@ Start chunli's job:
 
 ```bash
 curl -X POST \
-    -i 'localhost:8000/run?duration=1&rps_per_node=10' \
+    -i 'http://localhost:8000/run?duration=1&rps_per_node=10' \
     --upload-file /tmp/hello-call.gz
 
 ```
@@ -269,7 +269,7 @@ Gets chunli's job results:
 
 ```bash
 sleep 3 && \
-    curl -i 'localhost:8000/run?task_id=4ee301eb-6487-48a0-b6ed-e5f576accfc2'
+    curl -i 'http://localhost:8000/run?task_id=4ee301eb-6487-48a0-b6ed-e5f576accfc2'
 
 ```
 
@@ -320,7 +320,7 @@ Start chunli's job:
 
 ```bash
 curl -X POST \
-    -i 'localhost:8000/script?duration=1&rps_per_node=10' \
+    -i 'http://localhost:8000/script?duration=1&rps_per_node=10' \
     --upload-file /tmp/get_calls_block.py
 
 ```
@@ -342,7 +342,7 @@ Gets chunli's job results:
 
 ```bash
 sleep 3 && \
-    curl -i 'localhost:8000/script?task_id=4ee301eb-6487-48a0-b6ed-e5f576accfc2'
+    curl -i 'http://localhost:8000/script?task_id=4ee301eb-6487-48a0-b6ed-e5f576accfc2'
 
 ```
 
@@ -393,7 +393,7 @@ Start chunli's job:
 
 ```bash
 curl -X POST \
-    -i 'localhost:8000/script?duration=1&rps_per_node=10' \
+    -i 'http://localhost:8000/script?duration=1&rps_per_node=10' \
     --upload-file /tmp/get_calls_block_body.py
 
 ```
@@ -415,7 +415,7 @@ Gets chunli's job results:
 
 ```bash
 sleep 3 && \
-    curl -i 'localhost:8000/script?task_id=4ee301eb-6487-48a0-b6ed-e5f576accfc2'
+    curl -i 'http://localhost:8000/script?task_id=4ee301eb-6487-48a0-b6ed-e5f576accfc2'
 
 ```
 
