@@ -1,6 +1,6 @@
 ## CHANGELOG
 
-### UNRELEASED
+### 0.11.3 - 2020-09-03
 
  - Replace requests to httpx
 
