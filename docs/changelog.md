@@ -1,6 +1,6 @@
 ## CHANGELOG
 
-### UNRELEASED
+### 0.11.0 - 2020-09-03
 
  - Create ramp-up feature
 
