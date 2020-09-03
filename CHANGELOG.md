@@ -1,5 +1,9 @@
 ## CHANGELOG
 
+### UNRELEASED
+
+ - Fix wait_call function
+
 ### 0.11.1 - 2020-09-03
 
  - Improve caller

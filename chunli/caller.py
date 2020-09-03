@@ -12,7 +12,6 @@ from typing import (
     Iterable,
     List,
     Optional,
-    Tuple,
     TypedDict,
 )
 
@@ -189,8 +188,6 @@ class Caller(DictDaora):
             executor = ThreadPoolExecutor(max_workers=100)
             calls_start_time = time.time()
             futures = []
-            calls_count_checkpoint = 0
-            wait_checkpoint = calls_start_time
             last_wait_time = 0.1
             run_call_func = make_run_call_function(
                 http_data_source, responses_status_map, latencies,
@@ -222,28 +219,24 @@ class Caller(DictDaora):
                         inputs = orjson.loads(inputs)
 
                     for input_ in inputs:
-                        logger.debug(f'Getting output for: {input_}')
 
                         def call_inputs() -> None:
                             nonlocal calls_count
+                            logger.debug(f'Getting output for: {input_}')
                             run_call_func(input_)
                             calls_count += 1
 
                         futures.append(executor.submit(call_inputs))
-                        (
-                            last_wait_time,
-                            wait_checkpoint,
-                            calls_count_checkpoint,
-                        ) = wait_to_call(
-                            wait_checkpoint=wait_checkpoint,
-                            calls_count_checkpoint=calls_count_checkpoint,
+                        last_wait_time = wait_to_call(
                             last_wait_time=last_wait_time,
                             current_calls_count=calls_count,
-                            duration=duration,
                             rps=rps_per_node,
                             rampup_time=rampup_time,
                             start_time=calls_start_time,
                         )
+
+                        if not should_running(calls_start_time, duration):
+                            break
 
                 except Exception as error_:
                     logger.exception(type(error_).__name__)
@@ -371,43 +364,40 @@ def make_run_call_function(
 
 
 def wait_to_call(
-    wait_checkpoint: float,
-    calls_count_checkpoint: int,
     last_wait_time: float,
     current_calls_count: int,
-    duration: int,
     rps: float,
     rampup_time: int,
     start_time: float,
-) -> Tuple[float, float, int]:
+) -> float:
     wait_time = last_wait_time
     now = time.time()
+    elapsed_time = now - start_time
 
     if rampup_time > 0:
-        rps = rps_for_rampup(now - start_time, rampup_time, rps)
+        rps = rps_for_rampup(elapsed_time, rampup_time, rps)
 
-    if now > wait_checkpoint + 1:
-        current_rps = (current_calls_count - calls_count_checkpoint) * round(
-            now - wait_checkpoint
-        )
-        rps_diff_percent = 1 - (current_rps / rps)
-        wait_checkpoint = now
-        calls_count_checkpoint = current_calls_count
+    if elapsed_time > 1:
+        current_rps = current_calls_count / elapsed_time
+    else:
+        current_rps = current_calls_count
 
-        if not -1.01 <= rps_diff_percent <= 0.01:
-            wait_time -= last_wait_time * rps_diff_percent
+    if current_rps > rps:
+        wait_time += last_wait_time * rps / current_rps
+    elif current_rps < rps - 1:
+        wait_time -= last_wait_time * current_rps / rps
 
-        wait_time = wait_time if wait_time >= 0 else 0
-
-        logger.debug(
-            f'current_rps={current_rps}, '
-            f'rps_diff_percent={rps_diff_percent}, '
-            f'wait_time={wait_time}'
-        )
+    logger.debug(
+        f'rps={rps}, '
+        f'current_rps={current_rps}, '
+        f'current_calls_count={current_calls_count}, '
+        f'wait_time={wait_time:.10f}, '
+        f'elapsed_time={elapsed_time}'
+    )
 
     time.sleep(wait_time)
 
-    return wait_time, wait_checkpoint, calls_count_checkpoint
+    return wait_time
 
 
 def rps_for_rampup(elapsed_time: float, rampup_time: int, rps: float) -> float:
