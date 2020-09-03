@@ -221,28 +221,29 @@ class Caller(DictDaora):
 
                         inputs = orjson.loads(inputs)
 
-                    def call_inputs() -> None:
-                        nonlocal calls_count
-                        for input_ in inputs:
-                            logger.debug(f'Getting output for: {input_}')
+                    for input_ in inputs:
+                        logger.debug(f'Getting output for: {input_}')
+
+                        def call_inputs() -> None:
+                            nonlocal calls_count
                             run_call_func(input_)
                             calls_count += 1
 
-                    futures.append(executor.submit(call_inputs))
-                    (
-                        last_wait_time,
-                        wait_checkpoint,
-                        calls_count_checkpoint,
-                    ) = wait_to_call(
-                        wait_checkpoint=wait_checkpoint,
-                        calls_count_checkpoint=calls_count_checkpoint,
-                        last_wait_time=last_wait_time,
-                        current_calls_count=calls_count,
-                        duration=duration,
-                        rps=rps_per_node,
-                        rampup_time=rampup_time,
-                        start_time=calls_start_time,
-                    )
+                        futures.append(executor.submit(call_inputs))
+                        (
+                            last_wait_time,
+                            wait_checkpoint,
+                            calls_count_checkpoint,
+                        ) = wait_to_call(
+                            wait_checkpoint=wait_checkpoint,
+                            calls_count_checkpoint=calls_count_checkpoint,
+                            last_wait_time=last_wait_time,
+                            current_calls_count=calls_count,
+                            duration=duration,
+                            rps=rps_per_node,
+                            rampup_time=rampup_time,
+                            start_time=calls_start_time,
+                        )
 
                 except Exception as error_:
                     logger.exception(type(error_).__name__)
