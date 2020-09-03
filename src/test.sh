@@ -18,7 +18,7 @@ coverage run -p $(which gunicorn) chunli.app:app -k uvicorn.workers.UvicornWorke
     -c gunicorn_conf.py >${uvicorn_output_file} 2>&1 &
 coverage run -p $(which uvicorn) docs.src.index.index_hello_app:app --port 8001  \
     >${uvicorn_hello_output_file} 2>&1 &
-sleep 2
+sleep 4
 
 for filepath in ${test_files}; do
     filename=$(echo ${filepath} | sed -r -e ${test_regex})
@@ -57,6 +57,7 @@ for filepath in ${test_files}; do
     sed ${output_tmpfile} -i -r -e \
         "s/${task_id}/4ee301eb-6487-48a0-b6ed-e5f576accfc2/g" 2>/dev/null
     $md5_cmd ${output_file} ${output_tmpfile} > ${checksum_file}
+
     sleep 5
 
     cp ${curl_file2} ${tmp_curl_file2}
@@ -68,8 +69,17 @@ for filepath in ${test_files}; do
             -e '$ s/(.*)/\1\n/g' > ${output_tmpfile2}
     sed ${output_tmpfile2} -i -r \
         -e "s/${task_id}/4ee301eb-6487-48a0-b6ed-e5f576accfc2/g" \
-        -e "s/content-length: 4[0-9]{2}/content-length: 409/g" \
+        -e "s/content-length: [0-9]+/content-length: 409/g" \
         -e 's/[0-9]+\.[0-9]+/1.0/g' 2>/dev/null
+
+    if test "${filename}" = "index_00_rampup_input"; then
+        sed ${output_tmpfile2} -i -r \
+        -e 's/"duration":1.0/"duration":10.0/g' \
+        -e 's/"rampup_time":1.0/"rampup_time":5/g' \
+        -e 's/"requested_rps_per_node":1.0/"requested_rps_per_node":10.0/g' \
+        -e 's/"realized_requests":1.0/"realized_requests":73.0/g' \
+        -e 's/"realized_rps":1.0/"realized_rps":7.3/g' 2>/dev/null
+    fi
 
     $md5_cmd ${output_file2} ${output_tmpfile2} > ${checksum_file2}
 
@@ -81,8 +91,8 @@ for filepath in ${test_files}; do
         echo -e "\nuvicorn output: ${uvicorn_output_file}\n"
         cat ${uvicorn_output_file}
 
-        ps ax | (ps ax | awk "/uvicorn docs.src.index.index_hello_app:app/ {print \$1}" | xargs kill -SIGTERM 2>/dev/null)
-        ps ax | (ps ax | awk "/gunicorn chunli:app/ {print \$1}" | xargs kill -SIGKILL 2>/dev/null)
+        ps ax | (ps ax | awk "/uvicorn docs.src.index.index_hello_app:app/ {print \$1}" | xargs kill -SIGKILL 2>/dev/null)
+        ps ax | (ps ax | awk "/gunicorn chunli.app:app/ {print \$1}" | xargs kill -SIGKILL 2>/dev/null)
 
         exit 1
     fi
@@ -95,8 +105,8 @@ for filepath in ${test_files}; do
         echo -e "\nuvicorn output: ${uvicorn_output_file}\n"
         cat ${uvicorn_output_file}
 
-        ps ax | (ps ax | awk "/uvicorn docs.src.index.index_hello_app:app/ {print \$1}" | xargs kill -SIGTERM 2>/dev/null)
-        ps ax | (ps ax | awk "/gunicorn chunli:app/ {print \$1}" | xargs kill -SIGKILL 2>/dev/null)
+        ps ax | (ps ax | awk "/uvicorn docs.src.index.index_hello_app:app/ {print \$1}" | xargs kill -SIGKILL 2>/dev/null)
+        ps ax | (ps ax | awk "/gunicorn chunli.app:app/ {print \$1}" | xargs kill -SIGKILL 2>/dev/null)
 
         exit 1
     fi
@@ -105,7 +115,7 @@ for filepath in ${test_files}; do
 done
 
 ps ax | (ps ax | awk "/uvicorn docs.src.index.index_hello_app:app/ {print \$1}" | xargs kill -SIGTERM 2>/dev/null)
-ps ax | (ps ax | awk "/gunicorn chunli:app/ {print \$1}" | xargs kill -SIGKILL 2>/dev/null)
+ps ax | (ps ax | awk "/gunicorn chunli.app:app/ {print \$1}" | xargs kill -SIGTERM 2>/dev/null)
 
 echo 'Docs examples outputs assertion passed!'
 echo -e '---------------------------------------\n'
