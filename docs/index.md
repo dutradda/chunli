@@ -76,6 +76,42 @@ Gets chunli's job results:
 ```
 
 
+## Ramp-up Example
+
+Running the server
+
+```bash
+uvicorn chunli:app
+```
+
+
+Create chunli's input file:
+
+```bash
+{!./src/index/index_00_simple_input.test.bash!}
+```
+
+Start chunli's job:
+
+```bash
+{!./src/index/index_00_rampup_input_curl.bash!}
+```
+
+```
+{!./src/index/index_00_rampup_input_curl.bash.output!}
+```
+
+Gets chunli's job results:
+
+```bash
+{!./src/index/index_00_rampup_input_curl2.bash!}
+```
+
+```
+{!./src/index/index_00_rampup_input_curl2.bash.output!}
+```
+
+
 ## Json Lines Example
 
 Running the server:

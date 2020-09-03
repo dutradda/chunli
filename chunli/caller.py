@@ -50,6 +50,7 @@ class Error(TypedDict):
 @jsondaora
 class Results(TypedDict):
     duration: Optional[float]
+    rampup_time: Optional[int]
     requested_rps_per_node: Optional[float]
     realized_requests: Optional[float]
     realized_rps: Optional[float]
@@ -62,6 +63,7 @@ class Results(TypedDict):
 class CallerConfig(TypedDict):
     duration: int
     rps_per_node: int
+    rampup_time: Optional[int]
 
 
 class Caller(DictDaora):
@@ -146,7 +148,9 @@ class Caller(DictDaora):
 
         try:
             self._run_calls(
-                configuration['duration'], configuration['rps_per_node']
+                configuration['duration'],
+                configuration['rps_per_node'],
+                configuration['rampup_time'],
             )
         except Exception as error:
             logger.exception(error)
@@ -164,8 +168,13 @@ class Caller(DictDaora):
         )
         data_source.close()
 
-    def _run_calls(self, duration: int, rps_per_node: int) -> None:
+    def _run_calls(
+        self, duration: int, rps_per_node: int, rampup_time: Optional[int]
+    ) -> None:
         with requests.Session() as http_data_source:
+            if rampup_time is None:
+                rampup_time = 0
+
             running_id = str(uuid.uuid4())
             logger.info(f'Starting calls for {running_id}')
             data_source = self.get_sync_data_source()
@@ -223,7 +232,10 @@ class Caller(DictDaora):
                         calls_count_checkpoint=calls_count_checkpoint,
                         last_wait_time=last_wait_time,
                         current_calls_count=calls_count,
+                        duration=duration,
                         rps=rps_per_node,
+                        rampup_time=rampup_time,
+                        start_time=calls_start_time,
                     )
 
                 except Exception as error_:
@@ -238,6 +250,7 @@ class Caller(DictDaora):
             realized_requests = sum(responses_status_map.values())
             results = make_results(
                 duration,
+                rampup_time,
                 rps_per_node,
                 realized_requests,
                 latencies,
@@ -272,6 +285,7 @@ class Caller(DictDaora):
 
         all_results = await data_source.hgetall(self._results_key)
         all_durations = []
+        all_rampups = []
         all_requested_rps_per_node = []
         all_realized_requests = []
         all_realized_rps = []
@@ -283,6 +297,7 @@ class Caller(DictDaora):
         for result in all_results.values():
             result = orjson.loads(result)
             all_durations.append(result['duration'])
+            all_rampups.append(result['rampup_time'])
             all_requested_rps_per_node.append(result['requested_rps_per_node'])
             all_realized_requests.append(result['realized_requests'])
             all_realized_rps.append(result['realized_rps'])
@@ -293,6 +308,7 @@ class Caller(DictDaora):
 
         duration_ = float(np.mean(all_durations))
         realized_requests = float(np.sum(all_realized_requests))
+        rampup_time = int(np.mean(all_rampups))
         results = Results(
             duration=duration_,
             requested_rps_per_node=float(np.mean(all_requested_rps_per_node)),
@@ -307,6 +323,7 @@ class Caller(DictDaora):
             error=None,
             nodes_quantity=len(all_results),
             errors_count=0,
+            rampup_time=rampup_time,
         )
         data_source.close()
         return results
@@ -350,10 +367,16 @@ def wait_to_call(
     calls_count_checkpoint: int,
     last_wait_time: float,
     current_calls_count: int,
-    rps: int,
+    duration: int,
+    rps: float,
+    rampup_time: int,
+    start_time: float,
 ) -> Tuple[float, float, int]:
     wait_time = last_wait_time
     now = time.time()
+
+    if rampup_time > 0:
+        rps = rps_for_rampup(now - start_time, rampup_time, rps)
 
     if now > wait_checkpoint + 1:
         current_rps = (current_calls_count - calls_count_checkpoint) * round(
@@ -379,8 +402,16 @@ def wait_to_call(
     return wait_time, wait_checkpoint, calls_count_checkpoint
 
 
+def rps_for_rampup(elapsed_time: float, rampup_time: int, rps: float) -> float:
+    if elapsed_time < rampup_time:
+        return rps * elapsed_time / rampup_time
+
+    return rps
+
+
 def make_results(
     duration: int,
+    rampup_time: int,
     rps_per_node: int,
     realized_requests: float,
     latencies: Iterable[float],
@@ -390,6 +421,7 @@ def make_results(
 ) -> Results:
     return Results(
         duration=duration,
+        rampup_time=rampup_time,
         requested_rps_per_node=rps_per_node,
         realized_requests=realized_requests,
         realized_rps=realized_requests / duration,

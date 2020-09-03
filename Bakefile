@@ -10,6 +10,7 @@ setup-chunli: //check-virtualenv
     pip install 'https://github.com/PyCQA/flake8/archive/0359533fca164ef21c40c8074fbd3899316b8f91.tar.gz'
     pip install -e git+https://github.com/numpy/numpy-stubs@f3c6315738489983f5f37e1477ac68373d71b470#egg=numpy-stubs
 
-integration: check-code tests-docs coverage
-
 dependencies: setup-chunli //dependencies
+
+tests-code: //check-virtualenv
+    coverage run -p -m pytest -xvv ${PROJECT_NAME}

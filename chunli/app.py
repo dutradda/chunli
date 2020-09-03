@@ -1,7 +1,7 @@
 import logging
 import random
 from concurrent.futures import ThreadPoolExecutor
-from typing import TypedDict
+from typing import Optional, TypedDict
 
 from apidaora import GZipFactory, appdaora, route
 from apidaora.asgi.base import ASGIApp
@@ -32,13 +32,22 @@ def make_app() -> ASGIApp:
     executor.submit(wait_for_ditributed_calls_in_background, chunli, config)
 
     @route.background('/run', tasks_repository_uri=config.redis_target)
-    async def run(duration: int, rps_per_node: int, body: GzipBody) -> Results:
+    async def run(
+        duration: int,
+        rps_per_node: int,
+        body: GzipBody,
+        rampup_time: Optional[int] = None,
+    ) -> Results:
         calls = (line.strip('\n') for line in body.open())
         chunli_run = Caller(data_source_target=config.redis_target)
 
         await chunli_run.set_calls(calls)
         await chunli_run.start_distributed_calls(
-            CallerConfig(duration=duration, rps_per_node=rps_per_node)
+            CallerConfig(
+                duration=duration,
+                rps_per_node=rps_per_node,
+                rampup_time=rampup_time,
+            )
         )
 
         try:
@@ -53,12 +62,21 @@ def make_app() -> ASGIApp:
             )
 
     @route.background('/script', tasks_repository_uri=config.redis_target)
-    async def script(duration: int, rps_per_node: int, body: str) -> Results:
+    async def script(
+        duration: int,
+        rps_per_node: int,
+        body: str,
+        rampup_time: Optional[int] = None,
+    ) -> Results:
         chunli_run = Caller(data_source_target=config.redis_target)
 
         await chunli_run.set_script(body)
         await chunli_run.start_distributed_calls(
-            CallerConfig(duration=duration, rps_per_node=rps_per_node)
+            CallerConfig(
+                duration=duration,
+                rps_per_node=rps_per_node,
+                rampup_time=rampup_time,
+            )
         )
 
         try:

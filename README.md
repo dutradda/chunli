@@ -76,7 +76,7 @@ server: uvicorn
 content-type: application/json
 content-length: 159
 
-{"task_id":"4ee301eb-6487-48a0-b6ed-e5f576accfc2","start_time":"1970-01-01T00:00:00+00:00","status":"running","signature":"b6449827ba79","args_signature":null}
+{"task_id":"4ee301eb-6487-48a0-b6ed-e5f576accfc2","start_time":"1970-01-01T00:00:00+00:00","status":"running","signature":"73b40a62fb5e","args_signature":null}
 
 ```
 
@@ -95,7 +95,67 @@ server: uvicorn
 content-type: application/json
 content-length: 409
 
-{"end_time":"1970-01-01T00:00:00+00:00","result":{"duration":1.0,"requested_rps_per_node":1.0,"realized_requests":1.0,"realized_rps":1.0,"latency":{"mean":1.0,"median":1.0,"percentile99":1.0,"percentile95":1.0},"error":null,"nodes_quantity":1,"errors_count":0},"task_id":"4ee301eb-6487-48a0-b6ed-e5f576accfc2","start_time":"1970-01-01T00:00:00+00:00","status":"finished","signature":"b6449827ba79","args_signature":null}
+{"end_time":"1970-01-01T00:00:00+00:00","result":{"duration":1.0,"rampup_time":0,"requested_rps_per_node":1.0,"realized_requests":1.0,"realized_rps":1.0,"latency":{"mean":1.0,"median":1.0,"percentile99":1.0,"percentile95":1.0},"error":null,"nodes_quantity":1,"errors_count":0},"task_id":"4ee301eb-6487-48a0-b6ed-e5f576accfc2","start_time":"1970-01-01T00:00:00+00:00","status":"finished","signature":"73b40a62fb5e","args_signature":null}
+
+```
+
+
+## Ramp-up Example
+
+Running the server
+
+```bash
+uvicorn chunli:app
+```
+
+
+Create chunli's input file:
+
+```bash
+echo http://localhost:8001/hello | gzip > /tmp/hello-call.gz
+
+zcat /tmp/hello-call.gz
+
+```
+
+Start chunli's job:
+
+```bash
+curl -X POST \
+    -i 'localhost:8000/run?duration=10&rps_per_node=10&rampup_time=5' \
+    --upload-file /tmp/hello-call.gz
+
+```
+
+```
+HTTP/1.1 100 Continue
+
+HTTP/1.1 202 Accepted
+date: Thu, 1st January 1970 00:00:00 GMT
+server: uvicorn
+content-type: application/json
+content-length: 159
+
+{"task_id":"4ee301eb-6487-48a0-b6ed-e5f576accfc2","start_time":"1970-01-01T00:00:00+00:00","status":"running","signature":"73b40a62fb5e","args_signature":null}
+
+```
+
+Gets chunli's job results:
+
+```bash
+sleep 12 && \
+    curl -i 'localhost:8000/run?task_id=4ee301eb-6487-48a0-b6ed-e5f576accfc2'
+
+```
+
+```
+HTTP/1.0 200 OK
+date: Thu, 1st January 1970 00:00:00 GMT
+server: uvicorn
+content-type: application/json
+content-length: 409
+
+{"end_time":"1970-01-01T00:00:00+00:00","result":{"duration":10.0,"rampup_time":5,"requested_rps_per_node":10.0,"realized_requests":73.0,"realized_rps":7.3,"latency":{"mean":1.0,"median":1.0,"percentile99":1.0,"percentile95":1.0},"error":null,"nodes_quantity":1,"errors_count":0},"task_id":"4ee301eb-6487-48a0-b6ed-e5f576accfc2","start_time":"1970-01-01T00:00:00+00:00","status":"finished","signature":"73b40a62fb5e","args_signature":null}
 
 ```
 
@@ -138,14 +198,14 @@ server: uvicorn
 content-type: application/json
 content-length: 159
 
-{"task_id":"4ee301eb-6487-48a0-b6ed-e5f576accfc2","start_time":"1970-01-01T00:00:00+00:00","status":"running","signature":"b6449827ba79","args_signature":null}
+{"task_id":"4ee301eb-6487-48a0-b6ed-e5f576accfc2","start_time":"1970-01-01T00:00:00+00:00","status":"running","signature":"73b40a62fb5e","args_signature":null}
 
 ```
 
 Gets chunli's job results:
 
 ```bash
-sleep 2 && \
+sleep 3 && \
     curl -i 'localhost:8000/run?task_id=4ee301eb-6487-48a0-b6ed-e5f576accfc2'
 
 ```
@@ -157,7 +217,7 @@ server: uvicorn
 content-type: application/json
 content-length: 409
 
-{"end_time":"1970-01-01T00:00:00+00:00","result":{"duration":1.0,"requested_rps_per_node":1.0,"realized_requests":1.0,"realized_rps":1.0,"latency":{"mean":1.0,"median":1.0,"percentile99":1.0,"percentile95":1.0},"error":null,"nodes_quantity":1,"errors_count":0},"task_id":"4ee301eb-6487-48a0-b6ed-e5f576accfc2","start_time":"1970-01-01T00:00:00+00:00","status":"finished","signature":"b6449827ba79","args_signature":null}
+{"end_time":"1970-01-01T00:00:00+00:00","result":{"duration":1.0,"rampup_time":0,"requested_rps_per_node":1.0,"realized_requests":1.0,"realized_rps":1.0,"latency":{"mean":1.0,"median":1.0,"percentile99":1.0,"percentile95":1.0},"error":null,"nodes_quantity":1,"errors_count":0},"task_id":"4ee301eb-6487-48a0-b6ed-e5f576accfc2","start_time":"1970-01-01T00:00:00+00:00","status":"finished","signature":"73b40a62fb5e","args_signature":null}
 
 ```
 
@@ -201,14 +261,14 @@ server: uvicorn
 content-type: application/json
 content-length: 159
 
-{"task_id":"4ee301eb-6487-48a0-b6ed-e5f576accfc2","start_time":"1970-01-01T00:00:00+00:00","status":"running","signature":"b6449827ba79","args_signature":null}
+{"task_id":"4ee301eb-6487-48a0-b6ed-e5f576accfc2","start_time":"1970-01-01T00:00:00+00:00","status":"running","signature":"73b40a62fb5e","args_signature":null}
 
 ```
 
 Gets chunli's job results:
 
 ```bash
-sleep 2 && \
+sleep 3 && \
     curl -i 'localhost:8000/run?task_id=4ee301eb-6487-48a0-b6ed-e5f576accfc2'
 
 ```
@@ -220,7 +280,7 @@ server: uvicorn
 content-type: application/json
 content-length: 409
 
-{"end_time":"1970-01-01T00:00:00+00:00","result":{"duration":1.0,"requested_rps_per_node":1.0,"realized_requests":1.0,"realized_rps":1.0,"latency":{"mean":1.0,"median":1.0,"percentile99":1.0,"percentile95":1.0},"error":null,"nodes_quantity":1,"errors_count":0},"task_id":"4ee301eb-6487-48a0-b6ed-e5f576accfc2","start_time":"1970-01-01T00:00:00+00:00","status":"finished","signature":"b6449827ba79","args_signature":null}
+{"end_time":"1970-01-01T00:00:00+00:00","result":{"duration":1.0,"rampup_time":0,"requested_rps_per_node":1.0,"realized_requests":1.0,"realized_rps":1.0,"latency":{"mean":1.0,"median":1.0,"percentile99":1.0,"percentile95":1.0},"error":null,"nodes_quantity":1,"errors_count":0},"task_id":"4ee301eb-6487-48a0-b6ed-e5f576accfc2","start_time":"1970-01-01T00:00:00+00:00","status":"finished","signature":"73b40a62fb5e","args_signature":null}
 
 ```
 
@@ -274,14 +334,14 @@ server: uvicorn
 content-type: application/json
 content-length: 159
 
-{"task_id":"4ee301eb-6487-48a0-b6ed-e5f576accfc2","start_time":"1970-01-01T00:00:00+00:00","status":"running","signature":"2504c7a91900","args_signature":null}
+{"task_id":"4ee301eb-6487-48a0-b6ed-e5f576accfc2","start_time":"1970-01-01T00:00:00+00:00","status":"running","signature":"0ecc7ebf73bc","args_signature":null}
 
 ```
 
 Gets chunli's job results:
 
 ```bash
-sleep 2 && \
+sleep 3 && \
     curl -i 'localhost:8000/script?task_id=4ee301eb-6487-48a0-b6ed-e5f576accfc2'
 
 ```
@@ -293,7 +353,7 @@ server: uvicorn
 content-type: application/json
 content-length: 409
 
-{"end_time":"1970-01-01T00:00:00+00:00","result":{"duration":1.0,"requested_rps_per_node":1.0,"realized_requests":1.0,"realized_rps":1.0,"latency":{"mean":1.0,"median":1.0,"percentile99":1.0,"percentile95":1.0},"error":null,"nodes_quantity":1,"errors_count":0},"task_id":"4ee301eb-6487-48a0-b6ed-e5f576accfc2","start_time":"1970-01-01T00:00:00+00:00","status":"finished","signature":"2504c7a91900","args_signature":null}
+{"end_time":"1970-01-01T00:00:00+00:00","result":{"duration":1.0,"rampup_time":0,"requested_rps_per_node":1.0,"realized_requests":1.0,"realized_rps":1.0,"latency":{"mean":1.0,"median":1.0,"percentile99":1.0,"percentile95":1.0},"error":null,"nodes_quantity":1,"errors_count":0},"task_id":"4ee301eb-6487-48a0-b6ed-e5f576accfc2","start_time":"1970-01-01T00:00:00+00:00","status":"finished","signature":"0ecc7ebf73bc","args_signature":null}
 
 ```
 
@@ -347,14 +407,14 @@ server: uvicorn
 content-type: application/json
 content-length: 159
 
-{"task_id":"4ee301eb-6487-48a0-b6ed-e5f576accfc2","start_time":"1970-01-01T00:00:00+00:00","status":"running","signature":"2504c7a91900","args_signature":null}
+{"task_id":"4ee301eb-6487-48a0-b6ed-e5f576accfc2","start_time":"1970-01-01T00:00:00+00:00","status":"running","signature":"0ecc7ebf73bc","args_signature":null}
 
 ```
 
 Gets chunli's job results:
 
 ```bash
-sleep 2 && \
+sleep 3 && \
     curl -i 'localhost:8000/script?task_id=4ee301eb-6487-48a0-b6ed-e5f576accfc2'
 
 ```
@@ -366,6 +426,6 @@ server: uvicorn
 content-type: application/json
 content-length: 409
 
-{"end_time":"1970-01-01T00:00:00+00:00","result":{"duration":1.0,"requested_rps_per_node":1.0,"realized_requests":1.0,"realized_rps":1.0,"latency":{"mean":1.0,"median":1.0,"percentile99":1.0,"percentile95":1.0},"error":null,"nodes_quantity":1,"errors_count":0},"task_id":"4ee301eb-6487-48a0-b6ed-e5f576accfc2","start_time":"1970-01-01T00:00:00+00:00","status":"finished","signature":"2504c7a91900","args_signature":null}
+{"end_time":"1970-01-01T00:00:00+00:00","result":{"duration":1.0,"rampup_time":0,"requested_rps_per_node":1.0,"realized_requests":1.0,"realized_rps":1.0,"latency":{"mean":1.0,"median":1.0,"percentile99":1.0,"percentile95":1.0},"error":null,"nodes_quantity":1,"errors_count":0},"task_id":"4ee301eb-6487-48a0-b6ed-e5f576accfc2","start_time":"1970-01-01T00:00:00+00:00","status":"finished","signature":"0ecc7ebf73bc","args_signature":null}
 
 ```
